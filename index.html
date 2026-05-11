@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Errores Experimentales 2026 - Simuladores de Física</title>
+    <meta name="description"
+        content="Plataforma interactiva para comprender mediciones, incertidumbre, distribución de errores y propagación experimental.">
+    <link rel="stylesheet" href="styles.css">
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <span class="logo-text">ERRORES <span class="accent">2026</span></span>
+            </div>
+            <button class="nav-toggle" id="navToggle" aria-label="Abrir menú">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </button>
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="#inicio" class="nav-link active">Inicio</a></li>
+                <li><a href="#teoria-formulas" class="nav-link">Teoría</a></li>
+                <li><a href="#caida-libre" class="nav-link">Caída Libre</a></li>
+                <li><a href="#balanza-brazos" class="nav-link">Balanza</a></li>
+                <li><a href="#propagacion-errores" class="nav-link">Propagación</a></li>
+                <li><a href="#acerca" class="nav-link">Acerca de</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main id="app">
+        <!-- SECCIÓN 1: INICIO -->
+        <section id="inicio" class="app-section">
+            <div class="hero-section">
+                <h1>Simuladores de Física - Errores Experimentales 2026</h1>
+                <p class="subtitle">Una plataforma interactiva para comprender cómo se mide, cómo se estima una magnitud física y cómo se propagan los errores experimentales.</p>
+                <p class="origin-note">Versión original conceptual: Excel / enseñanza experimental, 2005. Versión web: 2026.</p>
+            </div>
+
+            <div class="dashboard-grid">
+                <div class="card simulator-card" onclick="location.hash='#teoria-formulas'">
+                    <div class="card-icon">📚</div>
+                    <h3>Teoría y fórmulas</h3>
+                    <p>Conceptos fundamentales de error absoluto, relativo, promedio, desviación estándar, incertidumbre y propagación.</p>
+                    <span class="card-action">Ver teoría →</span>
+                </div>
+
+                <div class="card simulator-card" onclick="location.hash='#caida-libre'">
+                    <div class="card-icon">⏱️</div>
+                    <h3>Caída libre con cronómetro manual</h3>
+                    <p>El alumno mide manualmente el tiempo de caída de una esfera y observa su propio error experimental.</p>
+                    <span class="card-action">Abrir simulador →</span>
+                </div>
+
+                <div class="card simulator-card" onclick="location.hash='#balanza-brazos'">
+                    <div class="card-icon">⚖️</div>
+                    <h3>Balanza de brazos</h3>
+                    <p>Simulación dinámica de una balanza en equilibrio mediante pesas, torque y comparación de masas.</p>
+                    <span class="card-action">Abrir simulador →</span>
+                </div>
+
+                <div class="card simulator-card" onclick="location.hash='#propagacion-errores'">
+                    <div class="card-icon">📉</div>
+                    <h3>Propagación de errores</h3>
+                    <p>Áreas, volúmenes y magnitudes derivadas calculadas a partir de mediciones con incertidumbre.</p>
+                    <span class="card-action">Abrir simulador →</span>
+                </div>
+            </div>
+
+            <div class="info-banner">
+                <p>“Medir no es copiar la realidad: es estimarla con un instrumento, un método y una incertidumbre.”</p>
+            </div>
+        </section>
+
+        <!-- SECCIÓN 2: TEORÍA Y FÓRMULAS -->
+        <section id="teoria-formulas" class="app-section hidden">
+            <div class="section-header">
+                <h2>Teoría y Fórmulas</h2>
+                <button class="btn btn-secondary" onclick="location.hash='#inicio'">Volver al Inicio</button>
+            </div>
+            
+            <div class="theory-grid">
+                <div class="card formula-card">
+                    <h3>1. Valor Verdadero (xᵥ)</h3>
+                    <p>Es el valor ideal o real de una magnitud física. En una práctica real muchas veces no se conoce exactamente.</p>
+                </div>
+                <div class="card formula-card">
+                    <h3>2. Valor Medido (xₘ)</h3>
+                    <p>Es el resultado obtenido con un instrumento o procedimiento experimental.</p>
+                </div>
+                <div class="card formula-card">
+                    <h3>3. Error Absoluto (Eₐ)</h3>
+                    <p>Indica cuánto se aparta la medición del valor verdadero.</p>
+                    <div class="formula-display">Eₐ = xₘ - xᵥ</div>
+                </div>
+                <div class="card formula-card">
+                    <h3>4. Error Relativo Porcentual (Eᵣ%)</h3>
+                    <p>Mide la precisión de la medida en relación al valor total.</p>
+                    <div class="formula-display">Eᵣ% = (|Eₐ| / |xᵥ|) · 100</div>
+                </div>
+                <div class="card formula-card">
+                    <h3>5. Promedio Experimental (x̄)</h3>
+                    <p>Cuando los errores son aleatorios, el promedio tiende a acercarse al valor verdadero.</p>
+                    <div class="formula-display">x̄ = (Σ xᵢ) / n</div>
+                </div>
+                <div class="card formula-card">
+                    <h3>6. Desviación Estándar (s)</h3>
+                    <p>Mide la dispersión de las mediciones respecto al promedio.</p>
+                    <div class="formula-display">s = √[ Σ(xᵢ - x̄)² / (n - 1) ]</div>
+                </div>
+                <div class="card formula-card">
+                    <h3>7. Error Estándar (sₓ)</h3>
+                    <p>Indica la incertidumbre asociada al promedio experimental.</p>
+                    <div class="formula-display">sₓ = s / √n</div>
+                </div>
+                <div class="card formula-card">
+                    <h3>8. Error Aleatorio</h3>
+                    <p>Produce dispersión hacia ambos lados del valor medio. Se reduce repitiendo mediciones.</p>
+                </div>
+                <div class="card formula-card">
+                    <h3>9. Error Sistemático</h3>
+                    <p>Desplaza las mediciones en una dirección. No se corrige repitiendo mediciones.</p>
+                </div>
+                <div class="card formula-card">
+                    <h3>10. Error Grosero</h3>
+                    <p>Medición anómala por mala lectura o distracción.</p>
+                </div>
+                <div class="card formula-card">
+                    <h3>11. Distribución Normal</h3>
+                    <p>Las mediciones repetidas tienden a agruparse en una campana de Gauss.</p>
+                </div>
+                <div class="card formula-card" style="grid-column: 1 / -1;">
+                    <h3>12. Propagación de Errores</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                        <div>
+                            <p>Suma/Resta:</p>
+                            <div class="formula-display">Δz = √(Δx² + Δy²)</div>
+                        </div>
+                        <div>
+                            <p>Producto (z = x·y):</p>
+                            <div class="formula-display">Δz/z = √((Δx/x)² + (Δy/y)²)</div>
+                        </div>
+                        <div>
+                            <p>Volumen Cilindro (V = πr²h):</p>
+                            <div class="formula-display">ΔV/V = √((2Δr/r)² + (Δh/h)²)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECCIÓN 3: CAÍDA LIBRE -->
+        <section id="caida-libre" class="app-section hidden">
+            <div class="section-header">
+                <div>
+                    <h2>Caída Libre con Cronómetro Manual</h2>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem;">Mide el tiempo de caída y analiza tu error de reacción.</p>
+                </div>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button class="btn btn-secondary" onclick="resetCaida()">Reiniciar experimento</button>
+                    <button class="btn btn-primary" onclick="exportCaidaCSV()">Exportar CSV</button>
+                </div>
+            </div>
+
+            <div class="simulator-layout">
+                <aside class="controls-panel card">
+                    <h3>Configuración</h3>
+                    
+                    <div id="caida-setup-controls">
+                        <div class="control-group">
+                            <div class="label-row">
+                                <label>Altura inicial (h)</label>
+                                <span class="unit">m</span>
+                            </div>
+                            <input type="range" id="caida-h-slider" min="2" max="5" step="0.1" value="3">
+                            <div style="text-align: center; margin-top: 0.5rem; font-weight: 700;" id="caida-h-val">3.00 m</div>
+                        </div>
+
+                        <div class="control-group">
+                            <div class="label-row">
+                                <label>Gravedad (g)</label>
+                                <span class="unit">m/s²</span>
+                            </div>
+                            <select id="caida-g-select">
+                                <option value="9.81">Tierra (9.81)</option>
+                                <option value="1.62">Luna (1.62)</option>
+                                <option value="3.71">Marte (3.71)</option>
+                                <option value="custom">Personalizada</option>
+                            </select>
+                            <input type="number" id="caida-g-num" value="9.81" step="0.01" class="hidden" style="margin-top: 0.5rem;">
+                        </div>
+
+                        <button class="btn btn-primary" style="width: 100%;" onclick="startCaidaExperiment()">Iniciar experimento</button>
+                    </div>
+
+                    <div id="caida-active-controls" class="hidden">
+                        <div class="card highlight-blue" style="margin-bottom: 1rem; text-align: center;">
+                            <div class="res-label">Altura Bloqueada</div>
+                            <div class="res-value" id="caida-h-fixed">0.00 m</div>
+                        </div>
+                        
+                        <button class="btn btn-primary btn-large" id="btn-largar-esfera" onclick="dropEsfera()">Largar esfera</button>
+                        <button class="btn btn-red btn-large hidden" id="btn-registrar-impacto" onclick="stopCronometro()" style="background: var(--accent-red); color: white;">¡DETENER!</button>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 1rem;">
+                            <button class="btn btn-secondary" id="btn-caida-demo-10" onclick="simulateCaidaRandomTrials(10)">Demo: 10 med.</button>
+                            <button class="btn btn-secondary" id="btn-caida-demo-100" onclick="simulateCaidaRandomTrials(100)">Demo: 100 med.</button>
+                        </div>
+
+                        <div style="margin-top: 1.5rem; background: rgba(255,255,255,0.03); padding: 0.75rem; border-radius: 8px;">
+                            <div class="label-row" style="font-size: 0.75rem;"><label>Sesgo Demo (s)</label><span id="caida-bias-val">+0.12</span></div>
+                            <input type="range" id="caida-bias-slider" min="-0.2" max="0.3" step="0.01" value="0.12" oninput="updateCaidaDemoParams()">
+                            <div class="label-row" style="font-size: 0.75rem; margin-top: 0.5rem;"><label>Dispersión Demo (s)</label><span id="caida-std-val">0.06</span></div>
+                            <input type="range" id="caida-std-slider" min="0.01" max="0.15" step="0.01" value="0.06" oninput="updateCaidaDemoParams()">
+                        </div>
+
+                        <div style="margin-top: 1.5rem;">
+                            <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--text-secondary); cursor: pointer;">
+                                <input type="checkbox" id="caida-show-theory" checked> Mostrar tiempo teórico
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--text-secondary); cursor: pointer; margin-top: 0.5rem;">
+                                <input type="checkbox" id="caida-show-marker" checked onchange="updateCaidaStats()"> Mostrar valor verdadero en gráficos
+                            </label>
+                        </div>
+                    </div>
+                </aside>
+
+                <div class="visualization-panel">
+                    <div class="card canvas-card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <div id="caida-status" class="experiment-status status-waiting">Esperando inicio</div>
+                            <div id="caida-timer" style="font-family: monospace; font-size: 2.5rem; font-weight: 800; color: var(--accent-blue);">0.000 s</div>
+                        </div>
+                        <div class="canvas-container" id="caida-canvas-wrapper">
+                            <svg id="caida-svg" width="100%" height="100%" viewBox="0 0 600 400">
+                                <!-- Draw tower, sphere, ground in JS -->
+                            </svg>
+                            <div class="watermark">Dr. Eduardo R. Henquín</div>
+                        </div>
+                    </div>
+
+                    <div class="results-grid">
+                        <div class="result-item card">
+                            <span class="res-label">T. Teórico</span>
+                            <span class="res-value" id="res-caida-theory">0.000</span>
+                            <span class="res-unit">s</span>
+                        </div>
+                        <div class="result-item card highlight-blue">
+                            <span class="res-label">Último Medido</span>
+                            <span class="res-value" id="res-caida-last">0.000</span>
+                            <span class="res-unit">s</span>
+                        </div>
+                        <div class="result-item card">
+                            <span class="res-label">Error Abs.</span>
+                            <span class="res-value" id="res-caida-ea">0.000</span>
+                            <span class="res-unit">s</span>
+                        </div>
+                        <div class="result-item card">
+                            <span class="res-label">Intentos</span>
+                            <span class="res-value" id="res-caida-n">0</span>
+                            <span class="res-unit">n</span>
+                        </div>
+                        <div class="result-item card highlight-amber">
+                            <span class="res-label">Promedio</span>
+                            <span class="res-value" id="res-caida-mean">0.000</span>
+                            <span class="res-unit">s</span>
+                        </div>
+                        <div class="result-item card">
+                            <span class="res-label">Desv. Estándar</span>
+                            <span class="res-value" id="res-caida-std">0.000</span>
+                            <span class="res-unit">s</span>
+                        </div>
+                        <div class="result-item card">
+                            <span class="res-label">Err. Estándar</span>
+                            <span class="res-value" id="res-caida-se">0.000</span>
+                            <span class="res-unit">s</span>
+                        </div>
+                        <div class="result-item card">
+                            <span class="res-label">Sesgo Humano</span>
+                            <span class="res-value" id="res-caida-bias">0.000</span>
+                            <span class="res-unit">s</span>
+                        </div>
+                    </div>
+
+                    <div class="card hidden" id="caida-conclusion">
+                        <h3>Interpretación Estadística</h3>
+                        <p id="caida-interpretation-text" class="interpretation-text"></p>
+                    </div>
+
+                    <div class="charts-grid">
+                        <div class="card">
+                            <h4 style="margin-bottom: 1rem;">Distribución de Tiempos (Histograma)</h4>
+                            <div class="chart-container">
+                                <svg id="caida-hist-svg" width="100%" height="100%"></svg>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                                <h4>Error por Intento</h4>
+                                <span id="caida-graph-note" style="font-size: 0.7rem; color: var(--text-muted);"></span>
+                            </div>
+                            <div class="chart-container">
+                                <svg id="caida-error-svg" width="100%" height="100%"></svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-container card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h3>Tabla de Intentos</h3>
+                            <span id="caida-table-note" style="font-size: 0.75rem; color: var(--accent-amber);"></span>
+                        </div>
+                        <div class="table-scroll">
+                            <table id="caida-table">
+                                <thead>
+                                    <tr>
+                                        <th>Intento</th>
+                                        <th>Tipo</th>
+                                        <th>h (m)</th>
+                                        <th>g (m/s²)</th>
+                                        <th>t_teórico (s)</th>
+                                        <th>t_medido (s)</th>
+                                        <th>E. Absoluto (s)</th>
+                                        <th>E. Relativo %</th>
+                                        <th>Clasificación</th>
+                                        <th>Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="caida-table-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECCIÓN 4: BALANZA DE BRAZOS -->
+        <section id="balanza-brazos" class="app-section hidden">
+            <div class="section-header">
+                <div>
+                    <h2>Balanza de Brazos: Medición Repetida</h2>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem;">Determina la masa de una muestra fija mediante pesadas sucesivas.</p>
+                </div>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button class="btn btn-secondary" onclick="nextBalanzaSample()">Nueva muestra / serie</button>
+                    <button class="btn btn-primary" onclick="exportBalanzaCSV()">Exportar CSV</button>
+                </div>
+            </div>
+
+            <div class="simulator-layout">
+                <aside class="controls-panel card">
+                    <div class="card highlight-purple" style="margin-bottom: 1.5rem; padding: 1rem;">
+                        <div class="label-row"><span style="font-weight: 700; color: var(--accent-purple);">MUESTRA ACTUAL</span><span id="balanza-sample-id" class="badge-impact">M-001</span></div>
+                        <div style="font-size: 0.8rem; margin-top: 0.5rem; color: var(--text-secondary);">
+                            <div>Pesadas registradas: <span id="balanza-n-count" style="color: var(--text-main); font-weight: 600;">0</span></div>
+                            <div id="balanza-true-mass-display" class="hidden">Masa real: <span id="balanza-true-val" style="color: var(--accent-green); font-weight: 600;">0.00 g</span></div>
+                        </div>
+                    </div>
+
+                    <h3>Parámetros Experimentales</h3>
+                    
+                    <div class="control-group">
+                        <label>Modo</label>
+                        <select id="balanza-mode-select" onchange="updateBalanzaUI()">
+                            <option value="desafio" selected>Desafío (Ciego)</option>
+                            <option value="practica">Práctica (Guiado)</option>
+                        </select>
+                    </div>
+
+                    <div class="control-group">
+                        <label>Resolución de Pesas</label>
+                        <select id="balanza-resolution-select" onchange="updateBalanzaResolution()">
+                            <option value="escolar">Escolar (mín. 1 g)</option>
+                            <option value="fina">Fina (mín. 0.1 g)</option>
+                        </select>
+                    </div>
+
+                    <div class="control-group">
+                        <label>Sensibilidad Balanza</label>
+                        <select id="balanza-sensitivity-select" onchange="updateBalanzaUI()">
+                            <option value="0.001">Alta (0.001 N·m)</option>
+                            <option value="0.004" selected>Media (0.004 N·m)</option>
+                            <option value="0.010">Baja (0.010 N·m)</option>
+                        </select>
+                    </div>
+
+                    <hr class="divider">
+
+                    <div class="control-group">
+                        <div class="label-row"><label>Error de Cero</label><span id="balanza-zero-val">0.0 g</span></div>
+                        <input type="range" id="balanza-zero-slider" min="-2" max="2" step="0.1" value="0">
+                    </div>
+
+                    <div class="control-group">
+                        <div class="label-row"><label>Variabilidad Observador</label><span id="balanza-var-val">0.5 g</span></div>
+                        <input type="range" id="balanza-var-slider" min="0" max="3" step="0.1" value="0.5">
+                    </div>
+
+                    <div class="control-group">
+                        <label class="label-row">Brazos</label>
+                        <select id="balanza-arms-config">
+                            <option value="iguales" selected>Iguales (d₁ = d₂)</option>
+                            <option value="variables">Variables</option>
+                        </select>
+                    </div>
+
+                    <div id="balanza-dist-controls" class="hidden">
+                        <div class="control-group">
+                            <div class="label-row"><label>d₁</label><span id="balanza-d1-val">1.00 m</span></div>
+                            <input type="range" id="balanza-d1-slider" min="0.5" max="2" step="0.01" value="1.0">
+                        </div>
+                        <div class="control-group">
+                            <div class="label-row"><label>d₂</label><span id="balanza-d2-val">1.00 m</span></div>
+                            <input type="range" id="balanza-d2-slider" min="0.5" max="2" step="0.01" value="1.0">
+                        </div>
+                    </div>
+
+                    <hr class="divider">
+
+                    <div class="control-group">
+                        <label class="toggle-label">
+                            <span>Mostrar valor verdadero</span>
+                            <div class="switch">
+                                <input type="checkbox" id="balanza-show-mass">
+                                <span class="slider"></span>
+                            </div>
+                        </label>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 1rem;">
+                        <button class="btn btn-secondary" id="btn-balanza-demo-10" onclick="simulateBalanzaTrials(10)">Demo 10</button>
+                        <button class="btn btn-secondary" id="btn-balanza-demo-100" onclick="simulateBalanzaTrials(100)">Demo 100</button>
+                    </div>
+                </aside>
+
+                <div class="visualization-panel">
+                    <div class="card canvas-card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <div id="balanza-status" class="experiment-status status-waiting">Desequilibrada</div>
+                            <div class="challenge-hidden" style="font-family: monospace; font-size: 1.2rem; font-weight: 700; color: var(--accent-blue);">Σ Pesas: <span id="res-balanza-pesas-live">0.0</span> g</div>
+                        </div>
+                        <div class="canvas-container">
+                            <svg id="balanza-svg" width="100%" height="100%" viewBox="0 0 600 400"></svg>
+                            <div class="watermark">Dr. Eduardo R. Henquín</div>
+                        </div>
+                        
+                        <div class="control-group" style="margin-top: 1.5rem;">
+                            <div class="label-row"><label>Agregar Pesas (Derecha)</label></div>
+                            <div id="balanza-weight-buttons" class="weight-grid"></div>
+                            <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+                                <button class="btn btn-secondary" style="flex: 1;" onclick="removeLastPesa()">Quitar última</button>
+                                <button class="btn btn-secondary" style="flex: 1; color: var(--accent-red);" onclick="clearPesas()">Vaciar plato</button>
+                                <button class="btn btn-primary btn-large" style="flex: 2;" id="btn-registrar-balanza" onclick="recordBalanzaMedicion()">Registrar medición</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="results-grid">
+                        <div class="result-item card challenge-hidden">
+                            <span class="res-label">Masa Verdadera</span>
+                            <span class="res-value" id="res-balanza-true">0.00</span>
+                            <span class="res-unit">g</span>
+                        </div>
+                        <div class="result-item card highlight-blue challenge-hidden">
+                            <span class="res-label">Masa Estimada</span>
+                            <span class="res-value" id="res-balanza-med">0.00</span>
+                            <span class="res-unit">g</span>
+                        </div>
+                        <div class="result-item card">
+                            <span class="res-label">Pesadas (n)</span>
+                            <span class="res-value" id="res-balanza-n">0</span>
+                        </div>
+                        <div class="result-item card highlight-amber">
+                            <span class="res-label">Promedio Estimado</span>
+                            <span class="res-value" id="res-balanza-mean">0.00</span>
+                            <span class="res-unit">g</span>
+                        </div>
+                        <div class="result-item card">
+                            <span class="res-label">Desv. Estándar</span>
+                            <span class="res-value" id="res-balanza-std">0.000</span>
+                            <span class="res-unit">g</span>
+                        </div>
+                        <div class="result-item card">
+                            <span class="res-label">Err. Estándar</span>
+                            <span class="res-value" id="res-balanza-se">0.000</span>
+                            <span class="res-unit">g</span>
+                        </div>
+                        <div class="result-item card">
+                            <span class="res-label">Sesgo Experimental</span>
+                            <span class="res-value" id="res-balanza-bias">0.000</span>
+                            <span class="res-unit">g</span>
+                        </div>
+                        <div class="result-item card">
+                            <span class="res-label">Rango (Max-Min)</span>
+                            <span class="res-value" id="res-balanza-range">0.00</span>
+                            <span class="res-unit">g</span>
+                        </div>
+                    </div>
+
+                    <div class="card hidden" id="balanza-interpretation-card">
+                        <h3>Interpretación Estadística</h3>
+                        <div id="balanza-interpretation" class="interpretation-text"></div>
+                    </div>
+
+                    <div class="charts-grid">
+                        <div class="card">
+                            <h4 style="margin-bottom: 1rem;">Distribución de Masas Estimadas</h4>
+                            <div class="chart-container">
+                                <svg id="balanza-hist-svg" width="100%" height="100%"></svg>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                                <h4>Error por Pesada</h4>
+                                <span id="balanza-graph-note" style="font-size: 0.7rem; color: var(--text-muted);"></span>
+                            </div>
+                            <div class="chart-container">
+                                <svg id="balanza-error-svg" width="100%" height="100%"></svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-container card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h3>Historial de Ensayos (Serie Actual)</h3>
+                            <span id="balanza-table-note" style="font-size: 0.75rem; color: var(--accent-amber);"></span>
+                        </div>
+                        <div class="table-scroll">
+                            <table id="balanza-table">
+                                <thead>
+                                    <tr>
+                                        <th>Ensayo</th>
+                                        <th>Tipo</th>
+                                        <th>Verdadera (g)</th>
+                                        <th>Aparente (g)</th>
+                                        <th>Estimada (g)</th>
+                                        <th>Pesas Usadas</th>
+                                        <th>d₁/d₂</th>
+                                        <th>Error Abs. (g)</th>
+                                        <th>Error Rel. %</th>
+                                        <th>Estado</th>
+                                        <th>Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="balanza-table-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECCIÓN 5: PROPAGACIÓN DE ERRORES -->
+        <section id="propagacion-errores" class="app-section hidden">
+            <div class="section-header">
+                <h2>Propagación de Errores Experimentales</h2>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button class="btn btn-secondary" onclick="resetPropagacion()">Reiniciar datos</button>
+                    <button class="btn btn-primary" onclick="exportPropagacionCSV()">Exportar CSV</button>
+                </div>
+            </div>
+
+            <div class="simulator-layout">
+                <aside class="controls-panel card">
+                    <h3>Configuración de Magnitud</h3>
+                    
+                    <div class="control-group">
+                        <label>Módulo</label>
+                        <select id="prop-module" onchange="changePropModule()">
+                            <option value="area">Área de Rectángulo</option>
+                            <option value="vol-prisma">Volumen de Prisma</option>
+                            <option value="vol-cilindro">Volumen de Cilindro</option>
+                            <option value="vol-esfera">Volumen de Esfera</option>
+                        </select>
+                    </div>
+
+                    <hr class="divider">
+
+                    <div id="prop-inputs">
+                        <!-- Dynamic inputs based on module -->
+                    </div>
+
+                    <button class="btn btn-primary" style="width: 100%; margin-bottom: 0.5rem;" onclick="simulateProp(1)">Medir una vez</button>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                        <button class="btn btn-secondary" onclick="simulateProp(10)">Simular 10</button>
+                        <button class="btn btn-secondary" onclick="simulateProp(100)">Simular 100</button>
+                    </div>
+                </aside>
+
+                <div class="visualization-panel">
+                    <div class="card canvas-card" style="height: 200px;">
+                        <svg id="prop-shape-svg" width="100%" height="100%" viewBox="0 0 600 200" preserveAspectRatio="xMidYMid meet"></svg>
+                    </div>
+
+                    <div class="results-grid">
+                        <div class="result-item card">
+                            <span class="res-label">Valor Verdadero</span>
+                            <span class="res-value" id="res-prop-true">0.00</span>
+                            <span class="res-unit" id="res-prop-unit">u³</span>
+                        </div>
+                        <div class="result-item card highlight-blue">
+                            <span class="res-label">Promedio Simulado</span>
+                            <span class="res-value" id="res-prop-mean">0.00</span>
+                            <span class="res-unit" id="res-prop-unit-2">u³</span>
+                        </div>
+                        <div class="result-item card highlight-amber">
+                            <span class="res-label">Incertidumbre Propagada (ΔZ)</span>
+                            <span class="res-value" id="res-prop-delta">0.00</span>
+                            <span class="res-unit" id="res-prop-unit-3">u³</span>
+                        </div>
+                        <div class="result-item card">
+                            <span class="res-label">Desv. Est. Experimental</span>
+                            <span class="res-value" id="res-prop-std">0.00</span>
+                            <span class="res-unit" id="res-prop-unit-4">u³</span>
+                        </div>
+                    </div>
+
+                    <div class="charts-grid">
+                        <div class="card" style="grid-column: 1 / -1;">
+                            <h4>Distribución de la Magnitud Derivada (Monte Carlo)</h4>
+                            <div class="chart-container">
+                                <svg id="prop-hist-svg" width="100%" height="100%"></svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3>Contribución al Error</h3>
+                        <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1rem;">Análisis de qué variable aporta más incertidumbre al resultado final.</p>
+                        <div id="prop-contribution-bars" style="display: flex; flex-direction: column; gap: 1rem;">
+                            <!-- Bars injected here -->
+                        </div>
+                    </div>
+
+                    <div class="table-container card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h3>Tabla de mediciones simuladas</h3>
+                            <span id="prop-table-note" style="font-size: 0.75rem; color: var(--accent-amber);"></span>
+                        </div>
+                        <div class="table-scroll">
+                            <table id="prop-table">
+                                <thead>
+                                    <tr>
+                                        <th>Ensayo</th>
+                                        <th>Tipo</th>
+                                        <th>Módulo</th>
+                                        <th>Variables medidas</th>
+                                        <th>Valor verdadero</th>
+                                        <th>Valor calculado</th>
+                                        <th>Δ propagada</th>
+                                        <th>Error abs.</th>
+                                        <th>Error rel. %</th>
+                                        <th>Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="prop-table-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECCIÓN 6: ACERCA DE -->
+        <section id="acerca" class="app-section hidden">
+            <div class="card about-card" style="display: grid; grid-template-columns: 1fr 300px; gap: 2rem; align-items: center;">
+                <div class="about-content">
+                    <h2>Acerca de esta aplicación</h2>
+                    <p>Estos simuladores forman parte de una reconstrucción moderna de herramientas educativas desarrolladas originalmente en Excel en 2005 por el Dr. Eduardo R. Henquín.</p>
+                    <p>La versión 2026 está diseñada para la enseñanza experimental de la física, permitiendo a los alumnos interactuar con el error humano, la resolución de instrumentos y la estadística de mediciones.</p>
+                    
+                    <div style="background: rgba(255,255,255,0.03); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color); margin-top: 1.5rem;">
+                        <p><strong>Autor:</strong> Dr. Eduardo R. Henquín</p>
+                        <p><strong>Concepto Original:</strong> 2005</p>
+                        <p><strong>Versión Web:</strong> 2026</p>
+                        <p><strong>Enlaces:</strong> <a href="https://ehenquin.github.io/LinkTreePro/" target="_blank" style="color: var(--accent-blue);">LinkTree Profesional</a></p>
+                    </div>
+                </div>
+                <div style="background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 12px; height: 300px; display: flex; align-items: center; justify-content: center; text-align: center; padding: 2rem;">
+                    <div>
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">📉</div>
+                        <h3 style="color: var(--accent-primary);">ERRORES 2026</h3>
+                        <p style="font-size: 0.8rem; color: var(--text-muted);">SIMULADOR EDUCATIVO</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="main-footer">
+        <div class="footer-container">
+            <div class="footer-info">
+                <p>Diseñado por <span class="footer-tag">Dr. Eduardo R. Henquín</span> | Basado en simuladores educativos originales (2005)</p>
+            </div>
+            <div class="footer-links">
+                <a href="https://ehenquin.github.io/LinkTreePro/" target="_blank">https://ehenquin.github.io/LinkTreePro/</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
