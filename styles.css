@@ -488,19 +488,44 @@ tr:hover td { background: rgba(255, 255, 255, 0.02); color: var(--text-primary);
 
 .formula-card {
     padding: 1.5rem;
-    border-top: 4px solid var(--accent-purple);
+    border-top: 3px solid var(--accent-purple);
 }
 
 .formula-card h3 { margin-bottom: 1rem; color: var(--accent-purple); }
 .formula-display {
-    background: rgba(15, 23, 42, 0.5);
-    padding: 1rem;
+    background: rgba(15, 23, 42, 0.65);
+    border: 1px solid rgba(167, 139, 250, 0.25);
+    padding: 1rem 1.25rem;
     border-radius: var(--radius-sm);
     text-align: center;
-    font-family: 'serif';
-    font-size: 1.4rem;
     margin: 1rem 0;
-    color: #fff;
+    color: var(--text-primary);
+    overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-color) transparent;
+}
+
+.formula-display::-webkit-scrollbar {
+    height: 4px;
+}
+
+.formula-display::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.formula-display::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 999px;
+}
+
+.formula-display mjx-container {
+    margin: 0 !important;
+    font-size: 1.15rem !important;
+    max-width: 100%;
+}
+
+.formula-card .formula-display mjx-container {
+    font-size: 1.05rem !important;
 }
 
 /* Specific module styles */
@@ -717,6 +742,402 @@ input:checked + .slider:before {
     color: white;
 }
 
+/* Dados y probabilidad experimental */
+#dados-probabilidad {
+    --dados-die-size: 76px;
+}
+
+#dados-probabilidad .dados-layout {
+    grid-template-columns: 340px 1fr;
+}
+
+#dados-probabilidad .dados-dice-stage {
+    background: rgba(15, 23, 42, 0.45);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 1.25rem 1rem;
+    margin-bottom: 1rem;
+}
+
+#dados-probabilidad .dados-dice-container {
+    display: flex;
+    justify-content: center;
+    gap: 2.25rem;
+    perspective: 1000px;
+}
+
+#dados-probabilidad .dados-die-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.85rem;
+}
+
+#dados-probabilidad .label,
+#dados-probabilidad .chart-subtitle {
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+#dados-probabilidad .dados-dice {
+    position: relative;
+    width: var(--dados-die-size);
+    height: var(--dados-die-size);
+    transform-style: preserve-3d;
+    transition: transform 0.9s cubic-bezier(0.17, 0.67, 0.83, 0.67);
+}
+
+#dados-probabilidad .dados-face {
+    position: absolute;
+    width: var(--dados-die-size);
+    height: var(--dados-die-size);
+    border-radius: 10px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    padding: 12%;
+    align-items: center;
+    justify-items: center;
+}
+
+#dados-probabilidad .dados-face > div {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#dados-probabilidad .dados-pip {
+    width: 82%;
+    height: 82%;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: inset 0 2px 2px rgba(0, 0, 0, 0.25);
+}
+
+#dados-probabilidad .dados-red-die .dados-face {
+    background: #dc2626;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+#dados-probabilidad .dados-black-die .dados-face {
+    background: #050505;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: inset 0 0 18px rgba(255, 255, 255, 0.06);
+}
+
+#dados-probabilidad .dados-front { transform: rotateY(0deg) translateZ(calc(var(--dados-die-size) / 2)); }
+#dados-probabilidad .dados-back { transform: rotateY(180deg) translateZ(calc(var(--dados-die-size) / 2)); }
+#dados-probabilidad .dados-right { transform: rotateY(90deg) translateZ(calc(var(--dados-die-size) / 2)); }
+#dados-probabilidad .dados-left { transform: rotateY(-90deg) translateZ(calc(var(--dados-die-size) / 2)); }
+#dados-probabilidad .dados-top { transform: rotateX(90deg) translateZ(calc(var(--dados-die-size) / 2)); }
+#dados-probabilidad .dados-bottom { transform: rotateX(-90deg) translateZ(calc(var(--dados-die-size) / 2)); }
+
+#dados-probabilidad .dados-rolling {
+    animation: dados-shake 0.1s infinite;
+}
+
+@keyframes dados-shake {
+    0% { transform: translate(1px, 1px) rotate(0deg); }
+    25% { transform: translate(-2px, 1px) rotate(-1deg); }
+    50% { transform: translate(2px, -1px) rotate(1deg); }
+    75% { transform: translate(-1px, -2px) rotate(0deg); }
+    100% { transform: translate(1px, -1px) rotate(-1deg); }
+}
+
+#dados-probabilidad .dados-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem;
+    margin-bottom: 1rem;
+}
+
+#dados-probabilidad .dados-controls .btn:first-child,
+#dados-probabilidad .dados-controls .btn:last-child {
+    grid-column: 1 / -1;
+}
+
+#dados-probabilidad .dados-summary {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+}
+
+#dados-probabilidad .dados-summary .card {
+    min-height: 92px;
+    padding: 0.8rem;
+}
+
+#dados-probabilidad .dados-histograms {
+    margin-top: 0;
+}
+
+#dados-probabilidad .dados-histogram-card {
+    height: 230px;
+}
+
+#dados-probabilidad .dados-histogram-card h3,
+#dados-probabilidad .canvas-card h3,
+#dados-probabilidad .dados-advanced-card h3,
+#dados-probabilidad .table-container h3 {
+    font-size: 1rem;
+    margin-bottom: 1rem;
+}
+
+#dados-probabilidad .dados-histogram-container {
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-end;
+    height: 150px;
+    margin: 0 0 1.75rem 35px;
+    border-bottom: 2px solid var(--border-color);
+    position: relative;
+}
+
+#dados-probabilidad .dados-y-axis-grid {
+    position: absolute;
+    left: -35px;
+    top: 0;
+    width: calc(100% + 35px);
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+}
+
+#dados-probabilidad .dados-grid-line {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    border-top: 1px dashed rgba(255, 255, 255, 0.1);
+}
+
+#dados-probabilidad .dados-grid-label {
+    position: absolute;
+    left: 0;
+    width: 30px;
+    padding-right: 5px;
+    color: var(--text-muted);
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-align: right;
+}
+
+#dados-probabilidad .dados-hist-column {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-direction: column;
+    width: calc(100% / 6);
+    height: 100%;
+    position: relative;
+    z-index: 2;
+}
+
+#dados-probabilidad .dados-hist-label {
+    position: absolute;
+    bottom: -1.65rem;
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+#dados-probabilidad .dados-bar-value {
+    position: absolute;
+    top: -1.15rem;
+    color: var(--text-primary);
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+#dados-probabilidad .dados-hist-bar {
+    width: 80%;
+    height: 0%;
+    min-height: 0;
+    background-color: var(--accent-red);
+    background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.18) 1px, transparent 1px);
+    background-repeat: repeat;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 3px 3px 0 0;
+    transition: height 0.25s ease-out;
+}
+
+#dados-probabilidad #dados-histogram-black .dados-hist-bar {
+    background-color: var(--accent-primary);
+}
+
+#dados-probabilidad .dados-canvas-wrapper {
+    width: 100%;
+    height: 240px;
+}
+
+#dados-probabilidad #dados-sum-chart {
+    width: 100%;
+    height: 100%;
+}
+
+#dados-probabilidad .educational-note {
+    margin-top: 0.85rem;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+#dados-probabilidad .dados-advanced-grid {
+    display: grid;
+    grid-template-columns: minmax(260px, 0.9fr) minmax(320px, 1.2fr);
+    gap: 1.5rem;
+}
+
+#dados-probabilidad .dados-matrix-grid {
+    display: grid;
+    grid-template-columns: 30px repeat(6, 1fr);
+    gap: 5px;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+#dados-probabilidad .dados-matrix-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+#dados-probabilidad .dados-matrix-cell {
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2px;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: var(--radius-sm);
+    background: rgba(15, 23, 42, 0.5);
+    color: transparent;
+    cursor: crosshair;
+    font-size: 0.58rem;
+    font-weight: 800;
+    line-height: 1.2;
+    transition: var(--transition);
+}
+
+#dados-probabilidad .dados-matrix-cell:hover {
+    color: var(--text-primary) !important;
+    transform: scale(1.12);
+    z-index: 3;
+    border-color: var(--border-hover);
+    box-shadow: var(--shadow-glow);
+}
+
+#dados-probabilidad .dados-cell-count {
+    font-size: 0.72rem;
+}
+
+#dados-probabilidad .dados-cell-pct,
+#dados-probabilidad .dados-cell-dev {
+    display: block;
+}
+
+#dados-probabilidad .dados-cell-pulse {
+    animation: dados-matrix-pulse 0.6s ease-out;
+}
+
+@keyframes dados-matrix-pulse {
+    0% { transform: scale(1); filter: brightness(1); }
+    50% { transform: scale(1.18); filter: brightness(1.8) saturate(1.6); }
+    100% { transform: scale(1); filter: brightness(1); }
+}
+
+#dados-heatmap-tooltip {
+    position: fixed;
+    display: none;
+    pointer-events: none;
+    z-index: 1200;
+    padding: 0.55rem 0.75rem;
+    border: 1px solid var(--accent-amber);
+    border-radius: var(--radius-sm);
+    background: rgba(15, 23, 42, 0.96);
+    color: var(--text-primary);
+    font-size: 0.78rem;
+    box-shadow: var(--shadow-lg);
+    transform: translate(-50%, -100%);
+    margin-top: -12px;
+}
+
+#dados-probabilidad .dados-tooltip-val {
+    color: var(--accent-amber);
+    font-weight: 800;
+}
+
+#dados-probabilidad .dados-advanced-hist {
+    height: 220px;
+}
+
+#dados-probabilidad .dados-advanced-hist .dados-hist-column {
+    width: calc(100% / 11);
+    flex-direction: column-reverse;
+    justify-content: flex-start;
+}
+
+#dados-probabilidad .dados-advanced-hist .dados-hist-bar {
+    display: flex;
+    flex-direction: column-reverse;
+    width: 74%;
+    background: transparent !important;
+    border: none;
+}
+
+#dados-probabilidad .dados-advanced-hist .dados-bar-value {
+    display: none;
+}
+
+#dados-probabilidad .dados-sum-segment {
+    width: 100%;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.22);
+    cursor: pointer;
+    position: relative;
+    transition: height 0.25s ease-out;
+}
+
+#dados-probabilidad .dados-sum-segment:hover {
+    filter: brightness(1.25) saturate(1.2);
+    outline: 1px solid rgba(255, 255, 255, 0.45);
+    z-index: 2;
+}
+
+#dados-probabilidad .dados-sum-segment-r1 { background-color: var(--accent-red); }
+#dados-probabilidad .dados-sum-segment-r2 { background-color: var(--accent-orange); }
+#dados-probabilidad .dados-sum-segment-r3 { background-color: var(--accent-amber); }
+#dados-probabilidad .dados-sum-segment-r4 { background-color: var(--accent-green); }
+#dados-probabilidad .dados-sum-segment-r5 { background-color: var(--accent-blue); }
+#dados-probabilidad .dados-sum-segment-r6 { background-color: var(--accent-purple); }
+
+@media (max-width: 1000px) {
+    #dados-probabilidad .dados-layout,
+    #dados-probabilidad .dados-advanced-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 520px) {
+    #dados-probabilidad {
+        --dados-die-size: 62px;
+    }
+
+    #dados-probabilidad .dados-dice-container {
+        gap: 1.25rem;
+    }
+
+    #dados-probabilidad .dados-controls,
+    #dados-probabilidad .dados-summary {
+        grid-template-columns: 1fr;
+    }
+}
+
 /* Footer */
 .main-footer {
     border-top: 1px solid var(--border-color);
@@ -730,14 +1151,42 @@ input:checked + .slider:before {
     margin: 0 auto;
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
+    gap: 1.5rem;
     color: var(--text-muted);
     font-size: 0.875rem;
 }
 
-.footer-info a { color: var(--text-secondary); text-decoration: none; }
-.footer-info a:hover { color: var(--text-primary); }
 .footer-tag { font-weight: 700; color: var(--text-secondary); }
+
+.license-text {
+    margin-top: 0.4rem;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    max-width: 900px;
+    line-height: 1.4;
+}
+
+.footer-links {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.footer-links a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.footer-links a:hover {
+    color: var(--accent-blue);
+}
+
+.footer-links span {
+    color: var(--text-muted);
+}
 
 /* Responsive */
 @media (max-width: 1024px) {
