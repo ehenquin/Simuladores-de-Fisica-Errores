@@ -57,6 +57,16 @@ const state = {
         },
         trials: [],
         results: {}
+    },
+    dados: {
+        initialized: false,
+        totalRolls: 0,
+        redCounts: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 },
+        blackCounts: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 },
+        sumCounts: Array(13).fill(0),
+        combinations: {},
+        isRolling: false,
+        audioCtx: null
     }
 };
 
@@ -83,6 +93,11 @@ function initNavigation() {
             if (sectionId === 'propagacion-errores') {
                 setTimeout(() => {
                     updatePropBase();
+                }, 0);
+            }
+            if (sectionId === 'dados-probabilidad') {
+                setTimeout(() => {
+                    dadosModule.renderChart();
                 }, 0);
             }
         }
@@ -1361,8 +1376,656 @@ function addTableRow(bodyId, cells) {
 }
 
 // ==========================================
+// 9. DADOS Y PROBABILIDAD EXPERIMENTAL
+// ==========================================
+const dadosModule = (() => {
+function resetDadosState() {
+    const dadosState = state.dados;
+    dadosState.totalRolls = 0;
+    dadosState.redCounts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
+    dadosState.blackCounts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
+    dadosState.sumCounts = Array(13).fill(0);
+    dadosState.combinations = {};
+    dadosState.isRolling = false;
+
+    for (let r = 1; r <= 6; r++) {
+        for (let b = 1; b <= 6; b++) {
+            dadosState.combinations[`r${r}b${b}`] = 0;
+        }
+    }
+}
+
+function getDadosElements() {
+    return {
+        dieRed: document.getElementById('dados-die-red'),
+        dieBlack: document.getElementById('dados-die-black'),
+        btnRoll: document.getElementById('dados-btn-roll'),
+        btnRoll10: document.getElementById('dados-btn-roll-10'),
+        btnRoll100: document.getElementById('dados-btn-roll-100'),
+        btnRoll1000: document.getElementById('dados-btn-roll-1000'),
+        btnReset: document.getElementById('dados-btn-reset'),
+        totalRollsSpan: document.getElementById('dados-total-rolls'),
+        lastSumSpan: document.getElementById('dados-last-sum'),
+        histRed: document.getElementById('dados-histogram-red'),
+        histBlack: document.getElementById('dados-histogram-black'),
+        statsBody: document.getElementById('dados-stats-body'),
+        canvas: document.getElementById('dados-sum-chart'),
+        matrixGrid: document.getElementById('dados-combination-matrix'),
+        histAdvanced: document.getElementById('dados-sum-histogram-advanced')
+    };
+}
+
+function playDadosSound() {
+    const AudioCtor = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtor) return;
+
+    if (!state.dados.audioCtx) {
+        state.dados.audioCtx = new AudioCtor();
+    }
+
+    const audioCtx = state.dados.audioCtx;
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+
+    const oscillator = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    oscillator.type = 'square';
+    oscillator.frequency.setValueAtTime(150, audioCtx.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.1);
+    gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+    oscillator.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    oscillator.start();
+    oscillator.stop(audioCtx.currentTime + 0.1);
+}
+
+function initDadosUI() {
+    const elements = getDadosElements();
+    if (!elements.histRed || !elements.histBlack || !elements.statsBody) return;
+
+    [elements.histRed, elements.histBlack].forEach(hist => {
+        hist.innerHTML = '';
+        for (let i = 1; i <= 6; i++) {
+            const col = document.createElement('div');
+            col.className = 'dados-hist-column';
+            col.id = `${hist.id}-col-${i}`;
+
+            const label = document.createElement('span');
+            label.className = 'dados-hist-label';
+            label.innerText = i;
+            col.appendChild(label);
+
+            const bar = document.createElement('div');
+            bar.className = 'dados-hist-bar';
+            bar.id = `${hist.id}-bar-${i}`;
+
+            const valLabel = document.createElement('span');
+            valLabel.className = 'dados-bar-value';
+            valLabel.id = `${hist.id}-val-${i}`;
+            valLabel.innerText = '0';
+            bar.appendChild(valLabel);
+
+            col.appendChild(bar);
+            hist.appendChild(col);
+        }
+
+        const yAxis = document.createElement('div');
+        yAxis.className = 'dados-y-axis-grid';
+        yAxis.id = `${hist.id}-y-axis`;
+        hist.appendChild(yAxis);
+    });
+
+    elements.statsBody.innerHTML = '';
+    for (let i = 1; i <= 6; i++) {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${i}</td>
+            <td id="dados-red-count-${i}">0</td>
+            <td id="dados-red-pct-${i}">0%</td>
+            <td id="dados-black-count-${i}">0</td>
+            <td id="dados-black-pct-${i}">0%</td>
+        `;
+        elements.statsBody.appendChild(row);
+    }
+
+    drawDadosDots(elements);
+    initDadosAdvancedStats(elements);
+    initDadosTooltip(elements);
+    updateDadosUI();
+}
+
+function initDadosTooltip(elements) {
+    let tooltip = document.getElementById('dados-heatmap-tooltip');
+    if (!tooltip) {
+        tooltip = document.createElement('div');
+        tooltip.id = 'dados-heatmap-tooltip';
+        document.body.appendChild(tooltip);
+    }
+    elements.tooltip = tooltip;
+}
+
+function initDadosAdvancedStats(elements) {
+    elements.matrixGrid.innerHTML = '';
+
+    const corner = document.createElement('div');
+    corner.className = 'dados-matrix-label';
+    elements.matrixGrid.appendChild(corner);
+
+    for (let b = 1; b <= 6; b++) {
+        const label = document.createElement('div');
+        label.className = 'dados-matrix-label';
+        label.innerText = `N${b}`;
+        elements.matrixGrid.appendChild(label);
+    }
+
+    for (let r = 1; r <= 6; r++) {
+        const label = document.createElement('div');
+        label.className = 'dados-matrix-label';
+        label.innerText = `R${r}`;
+        elements.matrixGrid.appendChild(label);
+
+        for (let b = 1; b <= 6; b++) {
+            const cell = document.createElement('div');
+            cell.className = 'dados-matrix-cell';
+            cell.id = `dados-cell-r${r}b${b}`;
+            cell.title = `Rojo: ${r}, Negro: ${b}`;
+            elements.matrixGrid.appendChild(cell);
+        }
+    }
+
+    elements.histAdvanced.innerHTML = '';
+    for (let s = 2; s <= 12; s++) {
+        const col = document.createElement('div');
+        col.className = 'dados-hist-column';
+
+        const label = document.createElement('span');
+        label.className = 'dados-hist-label';
+        label.innerText = s;
+        col.appendChild(label);
+
+        const bar = document.createElement('div');
+        bar.className = 'dados-hist-bar';
+        bar.id = `dados-sum-bar-${s}`;
+
+        const valLabel = document.createElement('span');
+        valLabel.className = 'dados-bar-value';
+        valLabel.id = `dados-sum-val-${s}`;
+        valLabel.innerText = '0';
+        bar.appendChild(valLabel);
+
+        col.appendChild(bar);
+        elements.histAdvanced.appendChild(col);
+    }
+
+    const yAxis = document.createElement('div');
+    yAxis.className = 'dados-y-axis-grid';
+    yAxis.id = 'dados-advanced-y-axis';
+    elements.histAdvanced.appendChild(yAxis);
+}
+
+function drawDadosDots(elements) {
+    const pipPositions = {
+        1: [5],
+        2: [1, 9],
+        3: [1, 5, 9],
+        4: [1, 3, 7, 9],
+        5: [1, 3, 5, 7, 9],
+        6: [1, 4, 7, 3, 6, 9]
+    };
+
+    [elements.dieRed, elements.dieBlack].forEach(die => {
+        const faces = ['front', 'back', 'right', 'left', 'top', 'bottom'];
+        const faceValues = [1, 6, 3, 4, 5, 2];
+
+        faces.forEach((faceClass, index) => {
+            const face = die.querySelector(`.dados-${faceClass}`);
+            const val = faceValues[index];
+            face.innerHTML = '';
+
+            for (let i = 1; i <= 9; i++) {
+                const slot = document.createElement('div');
+                if (pipPositions[val].includes(i)) {
+                    const pip = document.createElement('div');
+                    pip.className = 'dados-pip';
+                    slot.appendChild(pip);
+                }
+                face.appendChild(slot);
+            }
+        });
+    });
+}
+
+function getRandomDieValue() {
+    return Math.floor(Math.random() * 6) + 1;
+}
+
+function rollDados(silent = false) {
+    const dadosState = state.dados;
+    const valRed = getRandomDieValue();
+    const valBlack = getRandomDieValue();
+    const sum = valRed + valBlack;
+
+    dadosState.totalRolls++;
+    dadosState.redCounts[valRed]++;
+    dadosState.blackCounts[valBlack]++;
+    dadosState.sumCounts[sum]++;
+    dadosState.combinations[`r${valRed}b${valBlack}`]++;
+
+    if (!silent) {
+        pulseDadosMatrixCell(valRed, valBlack);
+        updateDadosUI(valRed, valBlack, sum);
+        animateDados(valRed, valBlack);
+        playDadosSound();
+    }
+}
+
+function rollDadosMultiple(count) {
+    const dadosState = state.dados;
+    const elements = getDadosElements();
+    if (dadosState.isRolling) return;
+
+    dadosState.isRolling = true;
+    elements.dieRed.parentElement.classList.add('dados-rolling');
+    elements.dieBlack.parentElement.classList.add('dados-rolling');
+    playDadosSound();
+
+    setTimeout(() => {
+        for (let i = 0; i < count; i++) {
+            rollDados(true);
+        }
+
+        updateDadosUI();
+        animateDados(getRandomDieValue(), getRandomDieValue());
+        elements.dieRed.parentElement.classList.remove('dados-rolling');
+        elements.dieBlack.parentElement.classList.remove('dados-rolling');
+        dadosState.isRolling = false;
+    }, 420);
+}
+
+function rollDadosChunked(total) {
+    const dadosState = state.dados;
+    const elements = getDadosElements();
+    if (dadosState.isRolling) return;
+
+    dadosState.isRolling = true;
+    elements.dieRed.parentElement.classList.add('dados-rolling');
+    elements.dieBlack.parentElement.classList.add('dados-rolling');
+    playDadosSound();
+
+    let count = 0;
+    const chunkSize = 50;
+
+    function process() {
+        const limit = Math.min(chunkSize, total - count);
+        for (let i = 0; i < limit; i++) {
+            rollDados(true);
+            count++;
+        }
+
+        if (count < total) {
+            requestAnimationFrame(process);
+        } else {
+            updateDadosUI();
+            animateDados(getRandomDieValue(), getRandomDieValue());
+            elements.dieRed.parentElement.classList.remove('dados-rolling');
+            elements.dieBlack.parentElement.classList.remove('dados-rolling');
+            dadosState.isRolling = false;
+        }
+    }
+
+    requestAnimationFrame(process);
+}
+
+function updateDadosUI(vRed, vBlack, sum) {
+    const dadosState = state.dados;
+    const elements = getDadosElements();
+    if (!elements.totalRollsSpan) return;
+
+    elements.totalRollsSpan.innerText = dadosState.totalRolls;
+    if (sum) elements.lastSumSpan.innerText = sum;
+
+    for (let i = 1; i <= 6; i++) {
+        const rCount = dadosState.redCounts[i];
+        const bCount = dadosState.blackCounts[i];
+        const rPct = dadosState.totalRolls > 0 ? ((rCount / dadosState.totalRolls) * 100).toFixed(1) : 0;
+        const bPct = dadosState.totalRolls > 0 ? ((bCount / dadosState.totalRolls) * 100).toFixed(1) : 0;
+
+        document.getElementById(`dados-red-count-${i}`).innerText = rCount;
+        document.getElementById(`dados-red-pct-${i}`).innerText = `${rPct}%`;
+        document.getElementById(`dados-black-count-${i}`).innerText = bCount;
+        document.getElementById(`dados-black-pct-${i}`).innerText = `${bPct}%`;
+    }
+
+    refreshDadosHistograms();
+    refreshDadosAdvancedStats();
+    renderDadosChart();
+}
+
+function pulseDadosMatrixCell(r, b) {
+    const cell = document.getElementById(`dados-cell-r${r}b${b}`);
+    if (!cell) return;
+
+    cell.classList.remove('dados-cell-pulse');
+    void cell.offsetWidth;
+    cell.classList.add('dados-cell-pulse');
+}
+
+function refreshDadosAdvancedStats() {
+    const dadosState = state.dados;
+    const maxSum = Math.max(...dadosState.sumCounts, 1);
+    const yScale = getDadosNiceMax(maxSum);
+
+    for (let r = 1; r <= 6; r++) {
+        for (let b = 1; b <= 6; b++) {
+            const count = dadosState.combinations[`r${r}b${b}`] || 0;
+            const cell = document.getElementById(`dados-cell-r${r}b${b}`);
+            if (!cell) continue;
+
+            const prob = dadosState.totalRolls > 0 ? (count / dadosState.totalRolls) : 0;
+            const theoreticalProb = 1 / 36;
+            const dev = prob - theoreticalProb;
+            const pct = (prob * 100).toFixed(2);
+            const devPct = (dev * 100).toFixed(2);
+            const devPrefix = dev >= 0 ? '+' : '';
+
+            cell.style.backgroundColor = getDadosHeatmapColor(prob);
+            cell.style.color = prob > 0.022 ? 'rgba(0,0,0,0.82)' : 'rgba(255,255,255,0.9)';
+            cell.innerHTML = `
+                <span class="dados-cell-count">${count}</span>
+                <span class="dados-cell-pct">${pct}%</span>
+                <span class="dados-cell-dev">${devPrefix}${devPct}%</span>
+            `;
+            cell.setAttribute('data-info', `Combinación: <span class="dados-tooltip-val">R${r} + N${b}</span><br>Frecuencia: <span class="dados-tooltip-val">${count}</span><br>Probabilidad: <span class="dados-tooltip-val">${pct}%</span><br>Desviación: <span class="dados-tooltip-val">${devPrefix}${devPct}%</span>`);
+        }
+    }
+
+    for (let s = 2; s <= 12; s++) {
+        const bar = document.getElementById(`dados-sum-bar-${s}`);
+        const valLabel = document.getElementById(`dados-sum-val-${s}`);
+        if (!bar || !valLabel) continue;
+
+        const total = dadosState.sumCounts[s];
+        const heightPct = (total / yScale) * 100;
+        bar.style.height = `${heightPct}%`;
+        valLabel.innerText = total;
+        bar.querySelectorAll('.dados-sum-segment').forEach(seg => seg.remove());
+
+        for (let r = 1; r <= 6; r++) {
+            const b = s - r;
+            if (b >= 1 && b <= 6 && total > 0) {
+                const combCount = dadosState.combinations[`r${r}b${b}`] || 0;
+                if (combCount > 0) {
+                    const segment = document.createElement('div');
+                    segment.className = `dados-sum-segment dados-sum-segment-r${r}`;
+                    const pctWithinSum = (combCount / total) * 100;
+                    const pctGlobal = dadosState.totalRolls > 0 ? (combCount / dadosState.totalRolls) * 100 : 0;
+                    segment.style.height = `${pctWithinSum}%`;
+                    segment.title = `Rojo ${r} + Negro ${b}: ${combCount}`;
+                    segment.setAttribute('data-info', `Suma: <span class="dados-tooltip-val">${s}</span><br>Combinación: <span class="dados-tooltip-val">Rojo ${r} + Negro ${b}</span><br>Frecuencia: <span class="dados-tooltip-val">${combCount}</span><br>Dentro de suma ${s}: <span class="dados-tooltip-val">${pctWithinSum.toFixed(1)}%</span><br>Sobre total: <span class="dados-tooltip-val">${pctGlobal.toFixed(2)}%</span>`);
+                    segment.setAttribute('data-suma', s);
+                    segment.setAttribute('data-rojo', r);
+                    segment.setAttribute('data-negro', b);
+                    segment.setAttribute('data-count', combCount);
+                    bar.appendChild(segment);
+                }
+            }
+        }
+    }
+
+    updateDadosYAxis('dados-advanced-y-axis', yScale);
+}
+
+function getDadosHeatmapColor(prob) {
+    if (prob === 0) return 'rgba(15, 23, 42, 0.5)';
+
+    const targetPct = (1 / 36) * 100;
+    const diff = (prob * 100) - targetPct;
+    let hue;
+
+    if (diff <= -0.5) {
+        hue = 220;
+    } else if (diff < 0) {
+        hue = 120 + (Math.abs(diff) / 0.5) * 100;
+    } else if (diff === 0) {
+        hue = 120;
+    } else if (diff < 0.5) {
+        hue = 120 - (diff / 0.5) * 120;
+    } else {
+        hue = 0;
+    }
+
+    const light = 45 + (Math.abs(diff) > 0.1 ? 5 : 15);
+    return `hsla(${hue}, 78%, ${light}%, 0.85)`;
+}
+
+function refreshDadosHistograms() {
+    const dadosState = state.dados;
+    const values = [...Object.values(dadosState.redCounts), ...Object.values(dadosState.blackCounts)];
+    const yScale = getDadosNiceMax(Math.max(...values, 1));
+    let segmentHeight = 10;
+
+    if (yScale > 15) segmentHeight = 8;
+    if (yScale > 30) segmentHeight = 6;
+    if (yScale > 50) segmentHeight = 4;
+    if (yScale > 100) segmentHeight = 3;
+    if (yScale > 200) segmentHeight = 2;
+
+    for (let i = 1; i <= 6; i++) {
+        updateDadosBar('dados-histogram-red', i, dadosState.redCounts[i], yScale, segmentHeight);
+        updateDadosBar('dados-histogram-black', i, dadosState.blackCounts[i], yScale, segmentHeight);
+    }
+
+    updateDadosYAxis('dados-histogram-red-y-axis', yScale);
+    updateDadosYAxis('dados-histogram-black-y-axis', yScale);
+}
+
+function getDadosNiceMax(max) {
+    if (max <= 10) return 10;
+    if (max <= 20) return 20;
+    if (max <= 50) return 50;
+    if (max <= 100) return 100;
+    const step = max > 500 ? 100 : 50;
+    return Math.ceil(max / step) * step;
+}
+
+function updateDadosYAxis(axisId, yScale) {
+    const yAxis = document.getElementById(axisId);
+    if (!yAxis) return;
+
+    yAxis.innerHTML = '';
+    const steps = 4;
+    for (let i = 0; i <= steps; i++) {
+        const val = Math.round((yScale / steps) * i);
+        const bottomPct = (i / steps) * 100;
+        const line = document.createElement('div');
+        line.className = 'dados-grid-line';
+        line.style.bottom = `${bottomPct}%`;
+
+        const label = document.createElement('span');
+        label.className = 'dados-grid-label';
+        label.innerText = val;
+        line.appendChild(label);
+        yAxis.appendChild(line);
+    }
+}
+
+function updateDadosBar(histId, num, count, yScale, segmentHeight) {
+    const bar = document.getElementById(`${histId}-bar-${num}`);
+    const valLabel = document.getElementById(`${histId}-val-${num}`);
+    if (!bar || !valLabel) return;
+
+    let heightPct = (count / yScale) * 100;
+    if (count > 0 && heightPct < 2) heightPct = 2;
+
+    bar.style.height = `${heightPct}%`;
+    bar.style.backgroundSize = `100% ${segmentHeight}px`;
+    valLabel.innerText = count;
+}
+
+function animateDados(vRed, vBlack) {
+    const elements = getDadosElements();
+    const angles = {
+        1: { x: 0, y: 0 },
+        6: { x: 0, y: 180 },
+        3: { x: 0, y: -90 },
+        4: { x: 0, y: 90 },
+        5: { x: -90, y: 0 },
+        2: { x: 90, y: 0 }
+    };
+
+    const aRed = angles[vRed];
+    const aBlack = angles[vBlack];
+    const extraTurns = 720;
+    elements.dieRed.style.transform = `rotateX(${aRed.x + extraTurns}deg) rotateY(${aRed.y + extraTurns}deg)`;
+    elements.dieBlack.style.transform = `rotateX(${aBlack.x + extraTurns}deg) rotateY(${aBlack.y + extraTurns}deg)`;
+}
+
+function renderDadosChart() {
+    const elements = getDadosElements();
+    if (!elements.canvas) return;
+
+    const ctx = elements.canvas.getContext('2d');
+    const width = elements.canvas.offsetWidth || 400;
+    const height = elements.canvas.offsetHeight || 240;
+    elements.canvas.width = width;
+    elements.canvas.height = height;
+    ctx.clearRect(0, 0, width, height);
+
+    const padding = 40;
+    const chartWidth = width - padding * 2;
+    const chartHeight = height - padding * 2;
+    const barWidth = chartWidth / 11;
+    const maxVal = Math.max(...state.dados.sumCounts, 1);
+
+    ctx.strokeStyle = '#475569';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(padding, padding);
+    ctx.lineTo(padding, height - padding);
+    ctx.lineTo(width - padding, height - padding);
+    ctx.stroke();
+
+    for (let i = 2; i <= 12; i++) {
+        const count = state.dados.sumCounts[i];
+        const barHeight = (count / maxVal) * chartHeight;
+        const x = padding + (i - 2) * barWidth + 5;
+        const y = height - padding - barHeight;
+        const gradient = ctx.createLinearGradient(0, y, 0, height - padding);
+        gradient.addColorStop(0, '#38bdf8');
+        gradient.addColorStop(1, '#6366f1');
+
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.roundRect(x, y, Math.max(barWidth - 10, 4), barHeight, 5);
+        ctx.fill();
+
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '12px Inter, system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(i, x + (barWidth - 10) / 2, height - padding + 20);
+
+        if (count > 0) {
+            ctx.fillStyle = '#f8fafc';
+            ctx.fillText(count, x + (barWidth - 10) / 2, y - 5);
+        }
+    }
+}
+
+function resetDados() {
+    resetDadosState();
+    const elements = getDadosElements();
+    if (elements.totalRollsSpan) elements.totalRollsSpan.innerText = '0';
+    if (elements.lastSumSpan) elements.lastSumSpan.innerText = '-';
+    initDadosUI();
+}
+
+function initDados() {
+    if (state.dados.initialized) return;
+    resetDadosState();
+    initDadosUI();
+
+    const elements = getDadosElements();
+    if (!elements.btnRoll) return;
+
+    elements.btnRoll.addEventListener('click', () => {
+        if (state.dados.isRolling) return;
+        state.dados.isRolling = true;
+        elements.dieRed.parentElement.classList.add('dados-rolling');
+        elements.dieBlack.parentElement.classList.add('dados-rolling');
+
+        setTimeout(() => {
+            rollDados();
+            elements.dieRed.parentElement.classList.remove('dados-rolling');
+            elements.dieBlack.parentElement.classList.remove('dados-rolling');
+            state.dados.isRolling = false;
+        }, 520);
+    });
+
+    elements.btnRoll10.addEventListener('click', () => rollDadosMultiple(10));
+    elements.btnRoll100.addEventListener('click', () => rollDadosMultiple(100));
+    elements.btnRoll1000.addEventListener('click', () => rollDadosChunked(1000));
+    elements.btnReset.addEventListener('click', resetDados);
+
+    elements.matrixGrid.addEventListener('mouseover', (e) => {
+        const cell = e.target.closest('.dados-matrix-cell');
+        const tooltip = document.getElementById('dados-heatmap-tooltip');
+        if (cell && tooltip && cell.hasAttribute('data-info')) {
+            tooltip.innerHTML = cell.getAttribute('data-info');
+            tooltip.style.display = 'block';
+        }
+    });
+
+    elements.matrixGrid.addEventListener('mousemove', (e) => {
+        const tooltip = document.getElementById('dados-heatmap-tooltip');
+        if (tooltip && tooltip.style.display === 'block') {
+            tooltip.style.left = `${e.clientX}px`;
+            tooltip.style.top = `${e.clientY}px`;
+        }
+    });
+
+    elements.matrixGrid.addEventListener('mouseout', () => {
+        const tooltip = document.getElementById('dados-heatmap-tooltip');
+        if (tooltip) tooltip.style.display = 'none';
+    });
+
+    elements.histAdvanced.addEventListener('mouseover', (e) => {
+        const segment = e.target.closest('.dados-sum-segment');
+        const tooltip = document.getElementById('dados-heatmap-tooltip');
+        if (segment && tooltip && segment.hasAttribute('data-info')) {
+            tooltip.innerHTML = segment.getAttribute('data-info');
+            tooltip.style.display = 'block';
+        }
+    });
+
+    elements.histAdvanced.addEventListener('mousemove', (e) => {
+        const tooltip = document.getElementById('dados-heatmap-tooltip');
+        if (tooltip && tooltip.style.display === 'block') {
+            tooltip.style.left = `${e.clientX}px`;
+            tooltip.style.top = `${e.clientY}px`;
+        }
+    });
+
+    elements.histAdvanced.addEventListener('mouseout', (e) => {
+        const segment = e.target.closest('.dados-sum-segment');
+        if (!segment) return;
+
+        const tooltip = document.getElementById('dados-heatmap-tooltip');
+        if (tooltip) tooltip.style.display = 'none';
+    });
+
+    window.addEventListener('resize', renderDadosChart);
+    state.dados.initialized = true;
+}
+
+// ==========================================
 // 9. INICIALIZACIÓN
 // ==========================================
+return {
+    init: initDados,
+    renderChart: renderDadosChart
+};
+})();
+
 document.addEventListener('DOMContentLoaded', () => {
     initNavigation();
     
@@ -1386,4 +2049,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Propagación
     changePropModule();
+
+    // Dados y probabilidad experimental
+    dadosModule.init();
 });
