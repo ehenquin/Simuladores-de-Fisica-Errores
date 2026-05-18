@@ -10,6 +10,7 @@
 const CAIDA_TABLE_VISIBLE_LIMIT = 100;
 const CAIDA_GRAPH_VISIBLE_LIMIT = 300;
 const PROP_TABLE_VISIBLE_LIMIT = 100;
+const PLANO_TABLE_VISIBLE_LIMIT = 100;
 
 const state = {
     currentSection: 'inicio',
@@ -32,6 +33,21 @@ const state = {
             se: 0,
             bias: 0
         }
+    },
+    plano: {
+        theta: 25,
+        L: 3,
+        g: 9.81,
+        experimentStarted: false,
+        isMoving: false,
+        arrived: false,
+        startTime: 0,
+        theoreticalTime: 0,
+        acceleration: 0,
+        animationId: null,
+        trials: [],
+        demoBias: 0.120,
+        demoStd: 0.060
     },
     balanza: {
         trueMass: 0,
@@ -258,7 +274,10 @@ function drawHistogram(svgId, values, theoreticalVal, meanVal) {
 
 function drawErrorSeries(svgId, trials, theoreticalVal) {
     const svg = document.getElementById(svgId);
-    const note = svgId.includes('caida') ? document.getElementById('caida-graph-note') : document.getElementById('balanza-graph-note');
+    let note = null;
+    if (svgId.includes('caida')) note = document.getElementById('caida-graph-note');
+    else if (svgId.includes('balanza')) note = document.getElementById('balanza-graph-note');
+    else if (svgId.includes('plano')) note = document.getElementById('plano-graph-note');
     if (!svg || !trials.length) {
         if(svg) svg.innerHTML = '';
         if(note) note.innerText = '';
@@ -631,7 +650,385 @@ function exportCaidaCSV() {
 }
 
 // ==========================================
-// 6. MÓDULO: BALANZA DE BRAZOS
+// 6. MÓDULO: PLANO INCLINADO
+// ==========================================
+function updatePlanoUI() {
+    const thetaSlider = document.getElementById('plano-theta-slider');
+    const lSlider = document.getElementById('plano-l-slider');
+    const gSelect = document.getElementById('plano-g-select');
+    const gNum = document.getElementById('plano-g-num');
+    if (!thetaSlider || !lSlider || !gSelect || !gNum) return;
+
+    if (!state.plano.experimentStarted) {
+        state.plano.theta = parseFloat(thetaSlider.value);
+        state.plano.L = parseFloat(lSlider.value);
+
+        if (gSelect.value === 'custom') {
+            gNum.classList.remove('hidden');
+            state.plano.g = parseFloat(gNum.value) || 9.81;
+        } else {
+            gNum.classList.add('hidden');
+            state.plano.g = parseFloat(gSelect.value);
+        }
+    }
+
+    updatePlanoPhysics();
+
+    document.getElementById('plano-theta-val').innerText = `${format(state.plano.theta, 0)}°`;
+    document.getElementById('plano-l-val').innerText = `${format(state.plano.L, 2)} m`;
+    document.getElementById('res-plano-theta').innerText = format(state.plano.theta, 0);
+    document.getElementById('res-plano-l').innerText = format(state.plano.L, 2);
+    document.getElementById('res-plano-a').innerText = format(state.plano.acceleration, 3);
+    document.getElementById('res-plano-theory').innerText = format(state.plano.theoreticalTime, 3);
+
+    drawPlanoSVG();
+}
+
+function updatePlanoPhysics() {
+    const thetaRad = state.plano.theta * Math.PI / 180;
+    state.plano.acceleration = state.plano.g * Math.sin(thetaRad);
+    state.plano.theoreticalTime = Math.sqrt(2 * state.plano.L / state.plano.acceleration);
+}
+
+function updatePlanoDemoParams() {
+    state.plano.demoBias = parseFloat(document.getElementById('plano-bias-slider').value);
+    state.plano.demoStd = parseFloat(document.getElementById('plano-std-slider').value);
+    document.getElementById('plano-bias-val').innerText = (state.plano.demoBias >= 0 ? '+' : '') + state.plano.demoBias.toFixed(2);
+    document.getElementById('plano-std-val').innerText = state.plano.demoStd.toFixed(2);
+}
+
+function startPlanoExperiment() {
+    updatePlanoUI();
+    state.plano.experimentStarted = true;
+    document.getElementById('plano-setup-controls').classList.add('hidden');
+    document.getElementById('plano-active-controls').classList.remove('hidden');
+    document.getElementById('plano-theta-fixed').innerText = `${format(state.plano.theta, 0)}°`;
+    document.getElementById('plano-l-fixed').innerText = `${format(state.plano.L, 2)} m`;
+    document.getElementById('plano-status').innerText = 'Listo para largar';
+    document.getElementById('plano-status').className = 'experiment-status status-active';
+    updatePlanoDemoParams();
+    drawPlanoSVG();
+}
+
+function resetPlano() {
+    if (state.plano.animationId) {
+        cancelAnimationFrame(state.plano.animationId);
+        state.plano.animationId = null;
+    }
+
+    state.plano.experimentStarted = false;
+    state.plano.isMoving = false;
+    state.plano.arrived = false;
+    state.plano.startTime = 0;
+    state.plano.trials = [];
+
+    document.getElementById('plano-setup-controls').classList.remove('hidden');
+    document.getElementById('plano-active-controls').classList.add('hidden');
+    document.getElementById('plano-timer').innerText = '0.000 s';
+    document.getElementById('plano-table-body').innerHTML = '';
+    document.getElementById('plano-table-note').innerText = '';
+    document.getElementById('plano-graph-note').innerText = '';
+    document.getElementById('plano-status').innerText = 'Esperando inicio';
+    document.getElementById('plano-status').className = 'experiment-status status-waiting';
+    document.getElementById('plano-conclusion').classList.add('hidden');
+    document.getElementById('btn-plano-largar').classList.remove('hidden');
+    document.getElementById('btn-plano-detener').classList.add('hidden');
+
+    ['res-plano-last', 'res-plano-ea', 'res-plano-n', 'res-plano-mean', 'res-plano-std', 'res-plano-se', 'res-plano-bias']
+        .forEach(id => document.getElementById(id).innerText = (id === 'res-plano-n' ? '0' : '0.000'));
+
+    drawHistogram('plano-hist-svg', [], 0, 0);
+    drawErrorSeries('plano-error-svg', [], 0);
+    updatePlanoUI();
+}
+
+function dropPlanoBody() {
+    if (!state.plano.experimentStarted || state.plano.isMoving) return;
+    if (state.plano.animationId) cancelAnimationFrame(state.plano.animationId);
+
+    state.plano.isMoving = true;
+    state.plano.arrived = false;
+    state.plano.startTime = performance.now();
+
+    document.getElementById('btn-plano-largar').classList.add('hidden');
+    document.getElementById('btn-plano-detener').classList.remove('hidden');
+    document.getElementById('plano-status').innerText = 'Cuerpo descendiendo...';
+    document.getElementById('plano-status').className = 'experiment-status status-active';
+
+    function animate() {
+        if (!state.plano.isMoving) return;
+
+        const elapsed = (performance.now() - state.plano.startTime) / 1000;
+        document.getElementById('plano-timer').innerText = `${format(elapsed, 3)} s`;
+
+        if (!state.plano.arrived && elapsed >= state.plano.theoreticalTime) {
+            state.plano.arrived = true;
+            document.getElementById('plano-status').innerText = 'Llegó al final';
+            document.getElementById('plano-status').className = 'experiment-status status-impact';
+        }
+
+        drawPlanoSVG();
+        state.plano.animationId = requestAnimationFrame(animate);
+    }
+
+    state.plano.animationId = requestAnimationFrame(animate);
+}
+
+function stopPlanoCronometro() {
+    if (!state.plano.isMoving) return;
+
+    const stopTime = performance.now();
+    state.plano.isMoving = false;
+    if (state.plano.animationId) {
+        cancelAnimationFrame(state.plano.animationId);
+        state.plano.animationId = null;
+    }
+
+    const medido = (stopTime - state.plano.startTime) / 1000;
+    document.getElementById('btn-plano-largar').classList.remove('hidden');
+    document.getElementById('btn-plano-detener').classList.add('hidden');
+    recordPlanoTrial(medido, "Manual");
+}
+
+function recordPlanoTrial(medido, tipo = "Manual", skipRender = false) {
+    updatePlanoPhysics();
+    const theory = state.plano.theoreticalTime;
+    const ea = medido - theory;
+    const er = (Math.abs(ea) / theory) * 100;
+
+    let clasificacion = "Correcto";
+    if (medido < theory - 0.05) clasificacion = "Anticipado";
+    else if (medido > theory + 0.05) clasificacion = "Tardío";
+
+    state.plano.trials.push({
+        tipo,
+        theta: state.plano.theta,
+        L: state.plano.L,
+        g: state.plano.g,
+        a: state.plano.acceleration,
+        teorico: theory,
+        medido,
+        ea,
+        er,
+        clasificacion
+    });
+
+    if (!skipRender) refreshPlanoAfterDataChange();
+}
+
+function simulatePlanoRandomTrials(n) {
+    if (!state.plano.experimentStarted) {
+        alert("Primero presione 'Iniciar experimento'");
+        return;
+    }
+    if (state.plano.isMoving) return;
+
+    const btn10 = document.getElementById('btn-plano-demo-10');
+    const btn100 = document.getElementById('btn-plano-demo-100');
+    const oldText10 = btn10.innerText;
+    const oldText100 = btn100.innerText;
+    btn10.disabled = true;
+    btn100.disabled = true;
+    btn10.innerText = "Generando...";
+    btn100.innerText = "Generando...";
+
+    setTimeout(() => {
+        const theory = state.plano.theoreticalTime;
+        for (let i = 0; i < n; i++) {
+            let medido = stats.gaussianRandom(theory + state.plano.demoBias, state.plano.demoStd);
+            if (medido < 0.001) medido = 0.001;
+            recordPlanoTrial(medido, "Demo", true);
+        }
+
+        refreshPlanoAfterDataChange();
+        btn10.disabled = false;
+        btn100.disabled = false;
+        btn10.innerText = oldText10;
+        btn100.innerText = oldText100;
+    }, 50);
+}
+
+function refreshPlanoAfterDataChange() {
+    renderPlanoTable();
+    updatePlanoStats();
+}
+
+function renderPlanoTable() {
+    const body = document.getElementById('plano-table-body');
+    const note = document.getElementById('plano-table-note');
+    if (!body) return;
+
+    const total = state.plano.trials.length;
+    const fragment = document.createDocumentFragment();
+    const startIdx = Math.max(0, total - PLANO_TABLE_VISIBLE_LIMIT);
+    note.innerText = total > PLANO_TABLE_VISIBLE_LIMIT ? `Mostrando últimos ${PLANO_TABLE_VISIBLE_LIMIT} de ${total} intentos` : "";
+
+    for (let i = total - 1; i >= startIdx; i--) {
+        const t = state.plano.trials[i];
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${i + 1}</td>
+            <td><span class="mode-badge" style="background:${t.tipo === 'Demo' ? 'rgba(99,102,241,0.1)' : 'rgba(56,189,248,0.1)'}">${t.tipo}</span></td>
+            <td>${format(t.theta, 0)}</td>
+            <td>${format(t.L, 2)}</td>
+            <td>${format(t.g, 2)}</td>
+            <td>${format(t.a, 3)}</td>
+            <td>${format(t.teorico)}</td>
+            <td>${format(t.medido)}</td>
+            <td>${format(t.ea)}</td>
+            <td>${format(t.er, 2)}%</td>
+            <td><span class="badge-${t.clasificacion.toLowerCase()}">${t.clasificacion}</span></td>
+            <td><button class="btn-danger-small" onclick="deletePlanoTrial(${i})">Eliminar</button></td>
+        `;
+        fragment.appendChild(row);
+    }
+
+    body.innerHTML = '';
+    body.appendChild(fragment);
+}
+
+function updatePlanoStats() {
+    const medidos = state.plano.trials.map(t => t.medido);
+    const mean = stats.mean(medidos);
+    const std = stats.sampleStd(medidos);
+    const se = stats.standardError(medidos);
+    const last = medidos.length ? medidos[medidos.length - 1] : 0;
+    const theory = state.plano.theoreticalTime;
+    const showMarker = document.getElementById('plano-show-marker')?.checked ?? true;
+
+    document.getElementById('res-plano-theta').innerText = format(state.plano.theta, 0);
+    document.getElementById('res-plano-l').innerText = format(state.plano.L, 2);
+    document.getElementById('res-plano-a').innerText = format(state.plano.acceleration, 3);
+    document.getElementById('res-plano-theory').innerText = format(theory, 3);
+    document.getElementById('res-plano-last').innerText = medidos.length ? format(last) : "0.000";
+    document.getElementById('res-plano-ea').innerText = medidos.length ? format(last - theory) : "0.000";
+    document.getElementById('res-plano-n').innerText = medidos.length;
+    document.getElementById('res-plano-mean').innerText = medidos.length ? format(mean) : "0.000";
+    document.getElementById('res-plano-std').innerText = medidos.length ? format(std) : "0.000";
+    document.getElementById('res-plano-se').innerText = medidos.length ? format(se) : "0.000";
+    document.getElementById('res-plano-bias').innerText = medidos.length ? format(mean - theory) : "0.000";
+
+    drawHistogram('plano-hist-svg', medidos, showMarker ? theory : null, mean);
+    drawErrorSeries('plano-error-svg', state.plano.trials, showMarker ? theory : null);
+    updatePlanoInterpretation();
+}
+
+function updatePlanoInterpretation() {
+    const conclusion = document.getElementById('plano-conclusion');
+    const textEl = document.getElementById('plano-interpretation-text');
+    const medidos = state.plano.trials.map(t => t.medido);
+
+    if (medidos.length < 5) {
+        conclusion.classList.add('hidden');
+        return;
+    }
+
+    const mean = stats.mean(medidos);
+    const std = stats.sampleStd(medidos);
+    const bias = mean - state.plano.theoreticalTime;
+    const lines = [];
+
+    if (Math.abs(bias) < 0.03) lines.push("El promedio medido está muy cerca del tiempo teórico.");
+    else if (bias > 0) lines.push("El promedio medido es mayor que el tiempo teórico: el observador tiende a reaccionar tarde.");
+    else lines.push("El promedio medido es menor que el tiempo teórico: el observador tiende a anticiparse.");
+
+    lines.push(`La dispersión (${format(std)} s) indica qué tan repetible fue la medición.`);
+    lines.push("Al aumentar el ángulo, la aceleración aumenta y el tiempo teórico disminuye.");
+    lines.push("Al aumentar el largo de rampa, el tiempo teórico aumenta.");
+
+    conclusion.classList.remove('hidden');
+    textEl.innerText = lines.join(" ");
+}
+
+function drawPlanoSVG() {
+    const svg = document.getElementById('plano-svg');
+    if (!svg) return;
+
+    const thetaRad = state.plano.theta * Math.PI / 180;
+    const minRampPx = 260;
+    const maxRampPx = 520;
+    const lengthRatio = (state.plano.L - 1) / 4;
+    const mappedRampPx = minRampPx + Math.max(0, Math.min(1, lengthRatio)) * (maxRampPx - minRampPx);
+    const maxEndY = 350;
+    const minStartY = 50;
+    const rampPx = Math.min(mappedRampPx, (maxEndY - minStartY) / Math.sin(thetaRad));
+    const startX = 95;
+    const startY = maxEndY - rampPx * Math.sin(thetaRad);
+    const endX = startX + rampPx * Math.cos(thetaRad);
+    const endY = startY + rampPx * Math.sin(thetaRad);
+    const groundY = endY + 45;
+    const showTheory = document.getElementById('plano-show-theory')?.checked ?? true;
+
+    let elapsed = 0;
+    if (state.plano.isMoving || state.plano.arrived) {
+        elapsed = (performance.now() - state.plano.startTime) / 1000;
+    }
+    const s = Math.min(0.5 * state.plano.acceleration * elapsed * elapsed, state.plano.L);
+    const progress = Math.max(0, Math.min(1, s / state.plano.L));
+    const bodyX = startX + (endX - startX) * progress;
+    const bodyY = startY + (endY - startY) * progress;
+    const radius = 18;
+    const normalX = -Math.sin(thetaRad);
+    const normalY = -Math.cos(thetaRad);
+    const cx = bodyX + normalX * radius;
+    const cy = bodyY + normalY * radius;
+    const visualRotation = (s / 0.18) * 180 / Math.PI;
+    const angleArcR = 58;
+    const angleX = endX - angleArcR * Math.cos(thetaRad / 2);
+    const angleY = endY - angleArcR * Math.sin(thetaRad / 2) - 2;
+
+    let content = "";
+    content += `<rect x="70" y="${groundY}" width="590" height="10" fill="var(--border-color)" opacity="0.75" />`;
+    content += `<line x1="${startX}" y1="${startY}" x2="${endX}" y2="${endY}" stroke="var(--accent-blue)" stroke-width="10" stroke-linecap="round" />`;
+    content += `<line x1="${startX}" y1="${startY + 28}" x2="${endX}" y2="${endY + 28}" stroke="rgba(56,189,248,0.18)" stroke-width="2" />`;
+    content += `<line x1="${endX}" y1="${endY}" x2="${endX}" y2="${groundY}" stroke="var(--border-color)" stroke-width="3" />`;
+    content += `<circle cx="${startX}" cy="${startY}" r="7" fill="var(--accent-green)" />`;
+    content += `<circle cx="${endX}" cy="${endY}" r="7" fill="var(--accent-red)" />`;
+    content += `<text x="${startX - 34}" y="${startY - 14}" fill="var(--accent-green)" font-size="13" font-weight="700">Inicio</text>`;
+    content += `<text x="${endX - 18}" y="${endY - 14}" fill="var(--accent-red)" font-size="13" font-weight="700">Llegada</text>`;
+    content += `<text x="${(startX + endX) / 2 - 20}" y="${(startY + endY) / 2 - 20}" fill="var(--text-secondary)" font-size="13">L = ${format(state.plano.L, 2)} m</text>`;
+    content += `<path d="M ${endX - angleArcR} ${endY} A ${angleArcR} ${angleArcR} 0 0 1 ${endX - angleArcR * Math.cos(thetaRad)} ${endY - angleArcR * Math.sin(thetaRad)}" fill="none" stroke="var(--accent-amber)" stroke-width="2" />`;
+    content += `<text x="${angleX - 12}" y="${angleY + 14}" fill="var(--accent-amber)" font-size="14" font-weight="700">θ = ${format(state.plano.theta, 0)}°</text>`;
+
+    content += `<g transform="translate(${cx} ${cy}) rotate(${visualRotation})">`;
+    content += `<circle cx="0" cy="0" r="${radius}" fill="var(--accent-purple)" stroke="white" stroke-opacity="0.25" stroke-width="2" />`;
+    content += `<line x1="0" y1="-${radius}" x2="0" y2="${radius}" stroke="rgba(255,255,255,0.65)" stroke-width="2" />`;
+    content += `<line x1="-${radius}" y1="0" x2="${radius}" y2="0" stroke="rgba(255,255,255,0.35)" stroke-width="2" />`;
+    content += `</g>`;
+
+    if (showTheory) {
+        content += `<text x="90" y="365" fill="var(--text-secondary)" font-size="13">a = g·sin(θ) = ${format(state.plano.acceleration, 3)} m/s²</text>`;
+        content += `<text x="90" y="386" fill="var(--text-secondary)" font-size="13">t teórico = ${format(state.plano.theoreticalTime, 3)} s</text>`;
+    }
+
+    svg.innerHTML = content;
+}
+
+function deletePlanoTrial(index) {
+    state.plano.trials.splice(index, 1);
+    refreshPlanoAfterDataChange();
+}
+
+function exportPlanoCSV() {
+    const headers = ["Intento", "Tipo", "Angulo_deg", "Largo_m", "Gravedad_m_s2", "Aceleracion_m_s2", "Tiempo_Teorico_s", "Tiempo_Medido_s", "Error_Absoluto_s", "Error_Relativo_pct", "Clasificacion"];
+    const rows = state.plano.trials.map((t, i) => [
+        i + 1,
+        t.tipo,
+        formatNumberForCSV(t.theta, 0),
+        formatNumberForCSV(t.L, 2),
+        formatNumberForCSV(t.g, 2),
+        formatNumberForCSV(t.a, 4),
+        formatNumberForCSV(t.teorico, 4),
+        formatNumberForCSV(t.medido, 4),
+        formatNumberForCSV(t.ea, 4),
+        formatNumberForCSV(t.er, 2),
+        t.clasificacion
+    ]);
+    exportCSV('plano_inclinado_experimento.csv', headers, rows);
+}
+
+// ==========================================
+// 7. MÓDULO: BALANZA DE BRAZOS
 // ==========================================
 function initBalanza() {
     state.balanza.trials = [];
@@ -2034,6 +2431,13 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('caida-g-select').addEventListener('change', updateCaidaUI);
     document.getElementById('caida-g-num').addEventListener('input', updateCaidaUI);
     updateCaidaUI();
+
+    // Plano Inclinado
+    document.getElementById('plano-theta-slider').addEventListener('input', updatePlanoUI);
+    document.getElementById('plano-l-slider').addEventListener('input', updatePlanoUI);
+    document.getElementById('plano-g-select').addEventListener('change', updatePlanoUI);
+    document.getElementById('plano-g-num').addEventListener('input', updatePlanoUI);
+    updatePlanoUI();
 
     // Balanza
     initBalanza();
