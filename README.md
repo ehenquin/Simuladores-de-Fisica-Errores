@@ -8,6 +8,8 @@ Una plataforma interactiva para comprender cómo se mide, cómo se estima una ma
 - **Balanza de brazos**: Simulación dinámica de una balanza en equilibrio mediante pesas, torque y comparación de masas.
 - **Propagación de errores**: Áreas, volúmenes y magnitudes derivadas calculadas a partir de mediciones con incertidumbre.
 
+- **Dados y probabilidad experimental**: Análisis de tiradas de dos dados para comparar probabilidad teórica, frecuencia experimental, distribución de sumas y convergencia estadística.
+
 ## Autor
 Diseñado por **Dr. Eduardo R. Henquín** | Basado en simuladores educativos originales (2005)
 [LinkTree Profesional](https://ehenquin.github.io/LinkTreePro/)
