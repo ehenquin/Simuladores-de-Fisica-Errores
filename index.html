@@ -41,6 +41,7 @@
                 <li><a href="#inicio" class="nav-link active">Inicio</a></li>
                 <li><a href="#teoria-formulas" class="nav-link">Teoría</a></li>
                 <li><a href="#caida-libre" class="nav-link">Caída Libre</a></li>
+                <li><a href="#plano-inclinado" class="nav-link">Plano Inclinado</a></li>
                 <li><a href="#balanza-brazos" class="nav-link">Balanza</a></li>
                 <li><a href="#propagacion-errores" class="nav-link">Propagación</a></li>
                 <li><a href="#dados-probabilidad" class="nav-link">Dados</a></li>
@@ -70,6 +71,13 @@
                     <div class="card-icon">⏱️</div>
                     <h3>Caída libre con cronómetro manual</h3>
                     <p>El alumno mide manualmente el tiempo de caída de una esfera y observa su propio error experimental.</p>
+                    <span class="card-action">Abrir simulador →</span>
+                </div>
+
+                <div class="card simulator-card" onclick="location.hash='#plano-inclinado'">
+                    <div class="card-icon">🛝</div>
+                    <h3>Plano inclinado con cronómetro manual</h3>
+                    <p>Medición experimental del tiempo de descenso sobre una rampa inclinada, comparando el resultado manual con el modelo teórico.</p>
                     <span class="card-action">Abrir simulador →</span>
                 </div>
 
@@ -277,7 +285,7 @@
                         <button class="btn btn-primary btn-large" id="btn-largar-esfera" onclick="dropEsfera()">Largar esfera</button>
                         <button class="btn btn-red btn-large hidden" id="btn-registrar-impacto" onclick="stopCronometro()" style="background: var(--accent-red); color: white;">¡DETENER!</button>
                         
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 1rem;">
+                        <div class="caida-demo-grid">
                             <button class="btn btn-secondary" id="btn-caida-demo-10" onclick="simulateCaidaRandomTrials(10)">Demo: 10 med.</button>
                             <button class="btn btn-secondary" id="btn-caida-demo-100" onclick="simulateCaidaRandomTrials(100)">Demo: 100 med.</button>
                         </div>
@@ -402,6 +410,180 @@
                                     </tr>
                                 </thead>
                                 <tbody id="caida-table-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECCIÓN 4: BALANZA DE BRAZOS -->
+        <section id="plano-inclinado" class="app-section hidden">
+            <div class="section-header">
+                <div>
+                    <h2>Plano Inclinado con Cronómetro Manual</h2>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem;">Mide el tiempo de descenso sobre una rampa y analiza tu error de reacción.</p>
+                </div>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button class="btn btn-secondary" onclick="resetPlano()">Reiniciar experimento</button>
+                    <button class="btn btn-primary" onclick="exportPlanoCSV()">Exportar CSV</button>
+                </div>
+            </div>
+
+            <div class="simulator-layout">
+                <aside class="controls-panel card">
+                    <h3>Configuración</h3>
+
+                    <div id="plano-setup-controls">
+                        <div class="control-group">
+                            <div class="label-row">
+                                <label>Ángulo de la rampa (θ)</label>
+                                <span class="unit">°</span>
+                            </div>
+                            <input type="range" id="plano-theta-slider" min="5" max="45" step="1" value="25">
+                            <div class="plano-control-value" id="plano-theta-val">25°</div>
+                        </div>
+
+                        <div class="control-group">
+                            <div class="label-row">
+                                <label>Largo de rampa (L)</label>
+                                <span class="unit">m</span>
+                            </div>
+                            <input type="range" id="plano-l-slider" min="1" max="5" step="0.1" value="3">
+                            <div class="plano-control-value" id="plano-l-val">3.00 m</div>
+                        </div>
+
+                        <div class="control-group">
+                            <div class="label-row">
+                                <label>Gravedad (g)</label>
+                                <span class="unit">m/s²</span>
+                            </div>
+                            <select id="plano-g-select">
+                                <option value="9.81">Tierra (9.81)</option>
+                                <option value="1.62">Luna (1.62)</option>
+                                <option value="3.71">Marte (3.71)</option>
+                                <option value="custom">Personalizada</option>
+                            </select>
+                            <input type="number" id="plano-g-num" value="9.81" step="0.01" class="hidden" style="margin-top: 0.5rem;">
+                        </div>
+
+                        <button class="btn btn-primary" style="width: 100%;" onclick="startPlanoExperiment()">Iniciar experimento</button>
+                    </div>
+
+                    <div id="plano-active-controls" class="hidden">
+                        <div class="card highlight-blue plano-fixed-card">
+                            <div>
+                                <span class="res-label">Ángulo bloqueado</span>
+                                <strong id="plano-theta-fixed">25°</strong>
+                            </div>
+                            <div>
+                                <span class="res-label">Largo bloqueado</span>
+                                <strong id="plano-l-fixed">3.00 m</strong>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-primary btn-large" id="btn-plano-largar" onclick="dropPlanoBody()">Largar cuerpo</button>
+                        <button class="btn btn-red btn-large hidden" id="btn-plano-detener" onclick="stopPlanoCronometro()" style="background: var(--accent-red); color: white;">¡DETENER!</button>
+
+                        <div class="plano-demo-grid">
+                            <button class="btn btn-secondary" id="btn-plano-demo-10" onclick="simulatePlanoRandomTrials(10)">Demo: 10 med.</button>
+                            <button class="btn btn-secondary" id="btn-plano-demo-100" onclick="simulatePlanoRandomTrials(100)">Demo: 100 med.</button>
+                        </div>
+
+                        <div class="plano-demo-box">
+                            <div class="label-row" style="font-size: 0.75rem;"><label>Sesgo Demo (s)</label><span id="plano-bias-val">+0.12</span></div>
+                            <input type="range" id="plano-bias-slider" min="-0.2" max="0.3" step="0.01" value="0.12" oninput="updatePlanoDemoParams()">
+                            <div class="label-row" style="font-size: 0.75rem; margin-top: 0.5rem;"><label>Dispersión Demo (s)</label><span id="plano-std-val">0.06</span></div>
+                            <input type="range" id="plano-std-slider" min="0.01" max="0.15" step="0.01" value="0.06" oninput="updatePlanoDemoParams()">
+                        </div>
+
+                        <div class="plano-checks">
+                            <label>
+                                <input type="checkbox" id="plano-show-theory" checked onchange="drawPlanoSVG()"> Mostrar tiempo teórico
+                            </label>
+                            <label>
+                                <input type="checkbox" id="plano-show-marker" checked onchange="updatePlanoStats()"> Mostrar valor verdadero en gráficos
+                            </label>
+                        </div>
+                    </div>
+                </aside>
+
+                <div class="visualization-panel">
+                    <div class="card canvas-card">
+                        <div class="plano-status-row">
+                            <div id="plano-status" class="experiment-status status-waiting">Esperando inicio</div>
+                            <div id="plano-timer" class="plano-timer">0.000 s</div>
+                        </div>
+                        <div class="canvas-container plano-canvas-container">
+                            <svg id="plano-svg" width="100%" height="100%" viewBox="0 0 700 420">
+                                <!-- Rampa y cuerpo generados por JS -->
+                            </svg>
+                            <div class="watermark">Dr. Eduardo R. Henquín</div>
+                        </div>
+                        <p class="plano-model-note">El cilindro se usa como representación visual. En esta primera versión se usa el modelo ideal de un cuerpo que baja por un plano inclinado sin rozamiento, sin considerar rotación ni momento de inercia.</p>
+                    </div>
+
+                    <div class="results-grid plano-results-grid">
+                        <div class="result-item card"><span class="res-label">Ángulo θ</span><span class="res-value" id="res-plano-theta">25</span><span class="res-unit">°</span></div>
+                        <div class="result-item card"><span class="res-label">Largo L</span><span class="res-value" id="res-plano-l">3.00</span><span class="res-unit">m</span></div>
+                        <div class="result-item card"><span class="res-label">Aceleración</span><span class="res-value" id="res-plano-a">0.000</span><span class="res-unit">m/s²</span></div>
+                        <div class="result-item card"><span class="res-label">T. Teórico</span><span class="res-value" id="res-plano-theory">0.000</span><span class="res-unit">s</span></div>
+                        <div class="result-item card highlight-blue"><span class="res-label">Último Medido</span><span class="res-value" id="res-plano-last">0.000</span><span class="res-unit">s</span></div>
+                        <div class="result-item card"><span class="res-label">Error Abs.</span><span class="res-value" id="res-plano-ea">0.000</span><span class="res-unit">s</span></div>
+                        <div class="result-item card"><span class="res-label">Intentos</span><span class="res-value" id="res-plano-n">0</span><span class="res-unit">n</span></div>
+                        <div class="result-item card highlight-amber"><span class="res-label">Promedio</span><span class="res-value" id="res-plano-mean">0.000</span><span class="res-unit">s</span></div>
+                        <div class="result-item card"><span class="res-label">Desv. Estándar</span><span class="res-value" id="res-plano-std">0.000</span><span class="res-unit">s</span></div>
+                        <div class="result-item card"><span class="res-label">Err. Estándar</span><span class="res-value" id="res-plano-se">0.000</span><span class="res-unit">s</span></div>
+                        <div class="result-item card"><span class="res-label">Sesgo Humano</span><span class="res-value" id="res-plano-bias">0.000</span><span class="res-unit">s</span></div>
+                    </div>
+
+                    <div class="card hidden" id="plano-conclusion">
+                        <h3>Interpretación Estadística</h3>
+                        <p id="plano-interpretation-text" class="interpretation-text"></p>
+                    </div>
+
+                    <div class="charts-grid">
+                        <div class="card">
+                            <h4 style="margin-bottom: 1rem;">Distribución de Tiempos (Histograma)</h4>
+                            <div class="chart-container">
+                                <svg id="plano-hist-svg" width="100%" height="100%"></svg>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                                <h4>Error por Intento</h4>
+                                <span id="plano-graph-note" style="font-size: 0.7rem; color: var(--text-muted);"></span>
+                            </div>
+                            <div class="chart-container">
+                                <svg id="plano-error-svg" width="100%" height="100%"></svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-container card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h3>Tabla de Intentos</h3>
+                            <span id="plano-table-note" style="font-size: 0.75rem; color: var(--accent-amber);"></span>
+                        </div>
+                        <div class="table-scroll">
+                            <table id="plano-table">
+                                <thead>
+                                    <tr>
+                                        <th>Intento</th>
+                                        <th>Tipo</th>
+                                        <th>θ (°)</th>
+                                        <th>L (m)</th>
+                                        <th>g (m/s²)</th>
+                                        <th>a (m/s²)</th>
+                                        <th>t_teórico (s)</th>
+                                        <th>t_medido (s)</th>
+                                        <th>E. Absoluto (s)</th>
+                                        <th>E. Relativo %</th>
+                                        <th>Clasificación</th>
+                                        <th>Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="plano-table-body"></tbody>
                             </table>
                         </div>
                     </div>
