@@ -580,6 +580,13 @@ tr:hover td { background: rgba(255, 255, 255, 0.02); color: var(--text-primary);
     width: 100%;
 }
 
+#caida-libre .caida-demo-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
 /* Toggle Switch */
 .switch {
     position: relative;
@@ -740,6 +747,153 @@ input:checked + .slider:before {
 #propagacion-errores .btn-danger-small:hover {
     background: var(--accent-red);
     color: white;
+}
+
+/* Plano Inclinado */
+#plano-inclinado .controls-panel.card {
+    padding: 1rem;
+}
+
+#plano-inclinado .control-group {
+    margin-bottom: 1rem;
+}
+
+#plano-inclinado .label-row {
+    margin-bottom: 0.25rem;
+    font-size: 0.82rem;
+}
+
+#plano-inclinado select,
+#plano-inclinado input[type="number"] {
+    padding: 0.4rem 0.5rem;
+    font-size: 0.85rem;
+}
+
+#plano-inclinado input[type="range"] {
+    height: 4px;
+    margin: 0.4rem 0;
+}
+
+#plano-inclinado .plano-control-value {
+    text-align: center;
+    margin-top: 0.35rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+#plano-inclinado .plano-fixed-card {
+    margin-bottom: 1rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    text-align: center;
+    padding: 0.85rem;
+}
+
+#plano-inclinado .plano-fixed-card strong {
+    display: block;
+    margin-top: 0.3rem;
+    font-size: 1.2rem;
+    color: var(--text-primary);
+}
+
+#plano-inclinado .plano-demo-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+#plano-inclinado .plano-demo-box {
+    margin-top: 1.5rem;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 0.75rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+#plano-inclinado .plano-checks {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+}
+
+#plano-inclinado .plano-checks label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+#plano-inclinado .plano-status-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+#plano-inclinado .plano-timer {
+    font-family: monospace;
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--accent-blue);
+}
+
+#plano-inclinado .plano-canvas-container {
+    background: linear-gradient(180deg, #020617 0%, #0f172a 100%);
+}
+
+#plano-inclinado #plano-svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+#plano-inclinado .plano-model-note {
+    margin-top: 0.85rem;
+    padding: 0.75rem 0.9rem;
+    border: 1px solid rgba(251, 191, 36, 0.18);
+    border-radius: var(--radius-sm);
+    background: rgba(251, 191, 36, 0.06);
+    color: var(--text-secondary);
+    font-size: 0.82rem;
+    line-height: 1.45;
+}
+
+#plano-inclinado .plano-results-grid {
+    grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
+}
+
+#plano-inclinado .chart-container {
+    height: 240px;
+}
+
+#plano-inclinado .table-container {
+    margin-top: 1rem;
+}
+
+#plano-inclinado table {
+    font-size: 0.76rem;
+}
+
+.badge-tardío {
+    color: var(--accent-red);
+}
+
+@media (max-width: 520px) {
+    #plano-inclinado .plano-fixed-card,
+    #plano-inclinado .plano-demo-grid {
+        grid-template-columns: 1fr;
+    }
+
+    #plano-inclinado .plano-timer {
+        font-size: 2rem;
+    }
 }
 
 /* Dados y probabilidad experimental */
