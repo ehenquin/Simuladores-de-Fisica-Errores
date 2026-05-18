@@ -12,6 +12,18 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['\\(', '\\)']],
+                displayMath: [['\\[', '\\]']]
+            },
+            svg: {
+                fontCache: 'global'
+            }
+        };
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
 </head>
 
 <body>
@@ -31,6 +43,7 @@
                 <li><a href="#caida-libre" class="nav-link">Caída Libre</a></li>
                 <li><a href="#balanza-brazos" class="nav-link">Balanza</a></li>
                 <li><a href="#propagacion-errores" class="nav-link">Propagación</a></li>
+                <li><a href="#dados-probabilidad" class="nav-link">Dados</a></li>
                 <li><a href="#acerca" class="nav-link">Acerca de</a></li>
             </ul>
         </div>
@@ -73,6 +86,12 @@
                     <p>Áreas, volúmenes y magnitudes derivadas calculadas a partir de mediciones con incertidumbre.</p>
                     <span class="card-action">Abrir simulador →</span>
                 </div>
+                <div class="card simulator-card" onclick="location.hash='#dados-probabilidad'">
+                    <div class="card-icon">🎲🎲</div>
+                    <h3>Dados y probabilidad experimental</h3>
+                    <p>Análisis de tiradas de dos dados para comparar frecuencias, sumas y combinaciones con el modelo teórico.</p>
+                    <span class="card-action">Abrir simulador →</span>
+                </div>
             </div>
 
             <div class="info-banner">
@@ -99,27 +118,47 @@
                 <div class="card formula-card">
                     <h3>3. Error Absoluto (Eₐ)</h3>
                     <p>Indica cuánto se aparta la medición del valor verdadero.</p>
-                    <div class="formula-display">Eₐ = xₘ - xᵥ</div>
+                    <div class="formula-display">
+                        \[
+                            E_a = x_m - x_v
+                        \]
+                    </div>
                 </div>
                 <div class="card formula-card">
                     <h3>4. Error Relativo Porcentual (Eᵣ%)</h3>
                     <p>Mide la precisión de la medida en relación al valor total.</p>
-                    <div class="formula-display">Eᵣ% = (|Eₐ| / |xᵥ|) · 100</div>
+                    <div class="formula-display">
+                        \[
+                            E_r \% = \frac{|E_a|}{|x_v|} \cdot 100
+                        \]
+                    </div>
                 </div>
                 <div class="card formula-card">
                     <h3>5. Promedio Experimental (x̄)</h3>
                     <p>Cuando los errores son aleatorios, el promedio tiende a acercarse al valor verdadero.</p>
-                    <div class="formula-display">x̄ = (Σ xᵢ) / n</div>
+                    <div class="formula-display">
+                        \[
+                            \bar{x} = \frac{1}{n}\sum_{i=1}^{n} x_i
+                        \]
+                    </div>
                 </div>
                 <div class="card formula-card">
                     <h3>6. Desviación Estándar (s)</h3>
                     <p>Mide la dispersión de las mediciones respecto al promedio.</p>
-                    <div class="formula-display">s = √[ Σ(xᵢ - x̄)² / (n - 1) ]</div>
+                    <div class="formula-display">
+                        \[
+                            s = \sqrt{\frac{\sum_{i=1}^{n}(x_i-\bar{x})^2}{n-1}}
+                        \]
+                    </div>
                 </div>
                 <div class="card formula-card">
-                    <h3>7. Error Estándar (sₓ)</h3>
+                    <h3>7. Error Estándar del Promedio</h3>
                     <p>Indica la incertidumbre asociada al promedio experimental.</p>
-                    <div class="formula-display">sₓ = s / √n</div>
+                    <div class="formula-display">
+                        \[
+                            s_{\bar{x}} = \frac{s}{\sqrt{n}}
+                        \]
+                    </div>
                 </div>
                 <div class="card formula-card">
                     <h3>8. Error Aleatorio</h3>
@@ -142,15 +181,43 @@
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
                         <div>
                             <p>Suma/Resta:</p>
-                            <div class="formula-display">Δz = √(Δx² + Δy²)</div>
+                            <div class="formula-display">
+                                \[
+                                    \Delta z = \sqrt{(\Delta x)^2 + (\Delta y)^2}
+                                \]
+                            </div>
                         </div>
                         <div>
                             <p>Producto (z = x·y):</p>
-                            <div class="formula-display">Δz/z = √((Δx/x)² + (Δy/y)²)</div>
+                            <div class="formula-display">
+                                \[
+                                    \frac{\Delta z}{z} =
+                                    \sqrt{
+                                    \left(\frac{\Delta x}{x}\right)^2 +
+                                    \left(\frac{\Delta y}{y}\right)^2
+                                    }
+                                \]
+                            </div>
                         </div>
                         <div>
                             <p>Volumen Cilindro (V = πr²h):</p>
-                            <div class="formula-display">ΔV/V = √((2Δr/r)² + (Δh/h)²)</div>
+                            <div class="formula-display">
+                                \[
+                                    \frac{\Delta V}{V} =
+                                    \sqrt{
+                                    \left(2\frac{\Delta r}{r}\right)^2 +
+                                    \left(\frac{\Delta h}{h}\right)^2
+                                    }
+                                \]
+                            </div>
+                        </div>
+                        <div>
+                            <p>Volumen Esfera (V = 4/3 πr³):</p>
+                            <div class="formula-display">
+                                \[
+                                    \frac{\Delta V}{V} = 3\frac{\Delta r}{r}
+                                \]
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -669,7 +736,121 @@
             </div>
         </section>
 
-        <!-- SECCIÓN 6: ACERCA DE -->
+        <!-- SECCIÓN 6: DADOS Y PROBABILIDAD EXPERIMENTAL -->
+        <section id="dados-probabilidad" class="app-section hidden">
+            <div class="section-header">
+                <h2>Dados y probabilidad experimental</h2>
+                <button class="btn btn-secondary" onclick="location.hash='#inicio'">Volver al Inicio</button>
+            </div>
+
+            <div class="simulator-layout dados-layout">
+                <div class="controls-panel card">
+                    <h3>Tiradas</h3>
+                    <div class="dados-dice-stage">
+                        <div class="dados-dice-container">
+                            <div class="dados-die-wrapper">
+                                <span class="label">Dado rojo</span>
+                                <div id="dados-die-red" class="dados-dice dados-red-die">
+                                    <div class="dados-face dados-front"></div>
+                                    <div class="dados-face dados-back"></div>
+                                    <div class="dados-face dados-right"></div>
+                                    <div class="dados-face dados-left"></div>
+                                    <div class="dados-face dados-top"></div>
+                                    <div class="dados-face dados-bottom"></div>
+                                </div>
+                            </div>
+                            <div class="dados-die-wrapper">
+                                <span class="label">Dado negro</span>
+                                <div id="dados-die-black" class="dados-dice dados-black-die">
+                                    <div class="dados-face dados-front"></div>
+                                    <div class="dados-face dados-back"></div>
+                                    <div class="dados-face dados-right"></div>
+                                    <div class="dados-face dados-left"></div>
+                                    <div class="dados-face dados-top"></div>
+                                    <div class="dados-face dados-bottom"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dados-controls">
+                        <button id="dados-btn-roll" class="btn btn-primary">Tirar dados</button>
+                        <button id="dados-btn-roll-10" class="btn btn-secondary">Tirar 10x</button>
+                        <button id="dados-btn-roll-100" class="btn btn-secondary">Tirar 100x</button>
+                        <button id="dados-btn-roll-1000" class="btn btn-secondary">Tirar 1000x</button>
+                        <button id="dados-btn-reset" class="btn btn-secondary">Reiniciar</button>
+                    </div>
+
+                    <div class="results-grid dados-summary">
+                        <div class="card result-item highlight-blue">
+                            <span class="res-label">Total</span>
+                            <span id="dados-total-rolls" class="res-value">0</span>
+                            <span class="res-unit">tiradas</span>
+                        </div>
+                        <div class="card result-item highlight-amber">
+                            <span class="res-label">Última suma</span>
+                            <span id="dados-last-sum" class="res-value">-</span>
+                            <span class="res-unit">rojo + negro</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="visualization-panel">
+                    <div class="charts-grid dados-histograms">
+                        <div class="chart-container dados-histogram-card">
+                            <h3>Frecuencia dado rojo</h3>
+                            <div id="dados-histogram-red" class="dados-histogram-container"></div>
+                        </div>
+                        <div class="chart-container dados-histogram-card">
+                            <h3>Frecuencia dado negro</h3>
+                            <div id="dados-histogram-black" class="dados-histogram-container"></div>
+                        </div>
+                    </div>
+
+                    <div class="card canvas-card">
+                        <h3>Distribución de la suma (2-12)</h3>
+                        <div class="dados-canvas-wrapper">
+                            <canvas id="dados-sum-chart"></canvas>
+                        </div>
+                        <p class="educational-note">La suma 7 tiene seis combinaciones posibles; por eso tiende a concentrar mayor frecuencia experimental.</p>
+                    </div>
+
+                    <div class="card dados-advanced-card">
+                        <h3>Distribución de sumas y combinaciones</h3>
+                        <div class="dados-advanced-grid">
+                            <div class="dados-heatmap-container">
+                                <span class="chart-subtitle">Matriz de probabilidad (rojo x negro)</span>
+                                <div id="dados-combination-matrix" class="dados-matrix-grid"></div>
+                            </div>
+                            <div class="dados-sum-composition-container">
+                                <span class="chart-subtitle">Composición interna de la suma</span>
+                                <div id="dados-sum-histogram-advanced" class="dados-histogram-container dados-advanced-hist"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-container card">
+                        <h3>Frecuencias por dado</h3>
+                        <div class="table-scroll">
+                            <table id="dados-stats-table">
+                                <thead>
+                                    <tr>
+                                        <th>Nº</th>
+                                        <th>Rojo cant.</th>
+                                        <th>Rojo %</th>
+                                        <th>Negro cant.</th>
+                                        <th>Negro %</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dados-stats-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECCIÓN 7: ACERCA DE -->
         <section id="acerca" class="app-section hidden">
             <div class="card about-card" style="display: grid; grid-template-columns: 1fr 300px; gap: 2rem; align-items: center;">
                 <div class="about-content">
@@ -695,25 +876,25 @@
         </section>
     </main>
 
-<footer class="main-footer">
-    <div class="footer-container">
-        <div class="footer-info">
-            <p>
-                Diseñado por <span class="footer-tag">Dr. Eduardo R. Henquín</span> |
-                Basado en simuladores educativos originales (2005)
-            </p>
-            <p class="license-text">
-                © 2026 Dr. Eduardo R. Henquín. Uso educativo y no comercial permitido.
-                No se permite copiar, republicar, modificar, vender ni presentar este simulador como propio sin autorización escrita del autor.
-            </p>
+    <footer class="main-footer">
+        <div class="footer-container">
+            <div class="footer-info">
+                <p>
+                    Diseñado por <span class="footer-tag">Dr. Eduardo R. Henquín</span> |
+                    Basado en simuladores educativos originales (2005)
+                </p>
+                <p class="license-text">
+                    © 2026 Dr. Eduardo R. Henquín. Uso educativo y no comercial permitido.
+                    No se permite copiar, republicar, modificar, vender ni presentar este simulador como propio sin autorización escrita del autor.
+                </p>
+            </div>
+            <div class="footer-links">
+                <a href="https://ehenquin.github.io/LinkTreePro/" target="_blank">LinkTree</a>
+                <span>|</span>
+                <a href="NOTICE.md" target="_blank">Uso y licencia</a>
+            </div>
         </div>
-        <div class="footer-links">
-            <a href="https://ehenquin.github.io/LinkTreePro/" target="_blank">LinkTree</a>
-            <span>|</span>
-            <a href="NOTICE.md" target="_blank">Uso y licencia</a>
-        </div>
-    </div>
-</footer>
+    </footer>
 
     <script src="app.js"></script>
 </body>
